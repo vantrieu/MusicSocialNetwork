@@ -1,4 +1,5 @@
 const express = require('express');
+const moment = require('moment')
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const auth = require('../middlewares/auth');
@@ -18,7 +19,7 @@ router.post('/create', async (req, res) => {
 router.post('/login', async(req, res) => {
     try {
         const { username, password } = req.body
-        const user = await User.findOne({username})
+        const user = await User.findOne({username});
         if (user == null) {
             res.json({message: 'Invalid login credentials'});
         }
@@ -29,8 +30,13 @@ router.post('/login', async(req, res) => {
         if (!user) {
             return res.status(401).send({error: 'Login failed! Check authentication credentials'})
         }
-        const token = await user.generateAuthToken()
-        res.send({ user, token })
+        const token = await user.generateAuthToken();
+        user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
+        user._doc.createdate = moment(user._doc.createdate).format('DD/MM/YYYY');
+        res.send({ 
+            'user': user,
+            'token': token 
+        });
     } catch (error) {
         res.status(400).send(error)
     }
@@ -56,7 +62,7 @@ router.post('/me/logoutall', auth, async(req, res) => {
     try {
         req.user.tokens.splice(0, req.user.tokens.length)
         await req.user.save()
-        res.send()
+        res.status(200).send({Message: 'Success'})
     } catch (error) {
         res.status(500).send(error)
     }
