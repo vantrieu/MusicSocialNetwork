@@ -10,6 +10,7 @@ require('dotenv/config');
 app.use(cors());
 app.use(bodyParser.json());
 app.use(errorhandler);
+app.use(require('morgan')('combined'))
 
 //Import Routes
 const postRoute = require('./routes/post');

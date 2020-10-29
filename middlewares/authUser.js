@@ -12,7 +12,6 @@ const authUser = async(req, res, next) => {
         res.locals.user = user;
         next()
     } catch (err) {
-        next(err);
         res.status(401).send({ 
             message: 'Not authorized to access this resource' 
         })
