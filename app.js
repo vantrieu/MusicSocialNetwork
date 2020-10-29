@@ -11,6 +11,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(errorhandler);
 app.use(require('morgan')('combined'))
+app.use(express.static(__dirname+'/public'));
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + '/index.html');
+})
 
 //Import Routes
 const postRoute = require('./routes/post');
