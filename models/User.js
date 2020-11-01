@@ -58,6 +58,10 @@ const userSchema = mongoose.Schema({
         type: Date,
         required: true,
         default: Date.now()
+    },
+    otp: {
+        type: String,
+        default: ''
     }
 })
 

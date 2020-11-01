@@ -3,6 +3,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const multer  = require('multer');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 
 
@@ -11,8 +12,8 @@ const storage = multer.diskStorage({
         cb(null, 'public/images');
     },
     filename: (req, file, cb) => {
-        console.log(file);
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, file.fieldname + path.extname(file.originalname));
+        req.url = file.fieldname + path.extname(file.originalname);
     }
 });
 const fileFilter = (req, file, cb) => {
@@ -106,6 +107,10 @@ exports.logoutall = async function (req, res, next) {
 
 exports.uploadimg = function(req, res, next) {
     try {
+        const user = res.locals.user;
+        user.avatar = '/images/' + req.url;
+        user.save();
+        console.log(user);
         return res.status(201).json({
             message: 'File uploded successfully'
         });
@@ -113,4 +118,48 @@ exports.uploadimg = function(req, res, next) {
         next(err);
     }
 };
+
+exports.getotp = async function(req, res, next) {
+    try {
+        const username = req.body.username;
+        const user = await User.findOne({ username: username });
+        if(user == null){
+            return res.status(201).json({
+                message: 'User not found'
+            });
+        }
+        var otp = Math.floor(Math.random() * 1000000);
+        var transporter =  nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: 'music.social.network.developer@gmail.com',
+                pass: 'Qpzm1092@'
+            }
+        });
+        var mainOptions = {
+            from: 'music.social.network.developer@gmail.com',
+            to: user.email,
+            subject: 'Test Nodemailer',
+            //text: 'You recieved message from',
+            html: '<p>You have got a new message</b><ul><li>Username:' + req.body.username + '</li></ul>'
+        }
+        transporter.sendMail(mainOptions, function(err, info){
+            if (err) {
+                console.log(err)
+                return res.status(500).json({
+                    message: 'Internal Server Error'
+                });
+            } else {
+                user.otp = otp;
+                user.save();
+                console.log(info);
+                return res.status(200).json({
+                    message: 'OTP was send!'
+                });
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+}
 
