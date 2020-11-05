@@ -140,7 +140,6 @@ exports.getotp = async function(req, res, next) {
             from: 'music.social.network.developer@gmail.com',
             to: user.email,
             subject: 'Test Nodemailer',
-            //text: 'You recieved message from',
             html: '<p>You have got a new message</b><ul><li>Username:' + req.body.username + '</li></ul>'
         }
         transporter.sendMail(mainOptions, function(err, info){
