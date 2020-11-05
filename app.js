@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const errorhandler = require('./helpers/error-handler');
+const fileUpload = require('express-fileupload');
 require('dotenv/config');
 
 //Middlewares
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(errorhandler);
 app.use(require('morgan')('combined'))
+app.use(fileUpload({createParentPath: true}));
 app.use(express.static(__dirname+'/public'));
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');

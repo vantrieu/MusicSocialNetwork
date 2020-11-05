@@ -11,7 +11,8 @@ router.post('/login', userController.login);
 router.get('/me', authUser, userController.me);
 router.post('/me/logout', authUser, userController.logout);
 router.post('/me/logoutall', authUser, userController.logoutall);
-router.post('/me/changeavatar', authUser, userController.upload.single('image'), userController.uploadimg);
+router.post('/me/changeavatar', authUser, userController.uploadimg);
 router.get('/otp', userController.getotp);
+router.post('/upload', userController.uploadmp3)
 
 module.exports = router;
