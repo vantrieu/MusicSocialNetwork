@@ -62,7 +62,9 @@ const userSchema = mongoose.Schema({
     otp: {
         type: String,
         default: ''
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
 })
 
 userSchema.pre('save', async function (next) {

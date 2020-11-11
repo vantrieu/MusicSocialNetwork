@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const errorhandler = require('./helpers/error-handler');
+const Account = require('./models/Account');
 const fileUpload = require('express-fileupload');
 require('dotenv/config');
 
@@ -15,14 +16,15 @@ app.use(require('morgan')('combined'))
 app.use(fileUpload({createParentPath: true}));
 app.use(express.static(__dirname+'/public'));
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 })
 
 //Import Routes
-const postRoute = require('./routes/post');
 const userRoute = require('./routes/user');
+const accountRoute = require('./routes/account');
 
-app.use('/posts', postRoute);
+//Routes
+app.use('/account', accountRoute);
 app.use('/users', userRoute);
 
 //Connect mongodb
@@ -36,7 +38,25 @@ mongoose.connect(
 
 mongoose.connection.on('error', console.error.bind(console, 'Database connection error:'));
 mongoose.connection.once('open', function () {
-    console.info('Successfully connected to the database');
+    console.info('Successfully connected to the database!');
+    const username = 'admin';
+    Account.findOne({ username: username }, function (err, account) {
+        if (err)
+            console.log(err);
+        if (!account) {
+            const account = new Account();
+            account._doc.username = 'admin';
+            account.password = '12345678';
+            account.email = 'admin@gmail.com';
+            account.role = 'Administrator';
+            account.createdate = Date.now();
+            account.save();
+            console.log('Generate database success!');
+        } else {
+            console.log('Not generate database!');
+        }
+
+    });
 });
 
 //Start listening to the server

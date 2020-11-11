@@ -1,11 +1,10 @@
 const moment = require('moment')
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const multer = require('multer');
 const nodemailer = require('nodemailer');
 const fileUpload = require('express-fileupload');
 const fs = require('fs');
-
+const jwt = require('jsonwebtoken');
 
 exports.me = function (req, res) {
     const user = res.locals.user;
@@ -54,8 +53,8 @@ exports.login = async function (req, res, next) {
             'user': userNoField,
             'token': token
         });
-    } catch (error) {
-        next(error);;
+    } catch (err) {
+        next(err);
     }
 }
 
@@ -189,5 +188,79 @@ exports.uploadmp3 = function (req, res, next) {
         }
     } catch (err) {
         res.status(500).send(err);
+    }
+}
+
+exports.geturlforgot = async function (req, res, next) {
+    try {
+        const email = req.body.email;
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            res.status('200').send({
+                message: 'Vui lòng kiểm tra mail để tiếp tục quá trình quên mật khẩu!'
+            });
+        };
+        const tokenForgot = jwt.sign({ _id: user._id }, process.env.JWT_KEY)
+        user.resetPasswordToken = tokenForgot;
+        user.save();
+        // var transporter = nodemailer.createTransport({
+        //     service: 'Gmail',
+        //     auth: {
+        //         user: 'music.social.network.developer@gmail.com',
+        //         pass: 'Qpzm1092@'
+        //     }
+        // });
+        // var mainOptions = {
+        //     from: 'music.social.network.developer@gmail.com',
+        //     to: user.email,
+        //     subject: 'Reset Password',
+        //     text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+        //         'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+        //         'http://localhost:3000/uses/reset/' + user.resetPasswordToken + '\n\n' +
+        //         'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+        // }
+        // transporter.sendMail(mainOptions, function (err, info) {
+        //     if (err) {
+        //         console.log(err)
+        //         return res.status(500).json({
+        //             message: 'Internal Server Error'
+        //         });
+        //     } else {
+        //         user.otp = otp;
+        //         user.save();
+        //         console.log(info);
+        //         return res.status(200).json({
+        //             message: 'OTP was send!'
+        //         });
+        //     }
+        // });
+        res.status('200').send({
+            message: 'http://localhost:3000/users/reset/' + user.resetPasswordToken
+        });
+    } catch (err) {
+        next(err);
+    }
+
+}
+
+exports.resetpassword = async function (req, res, next) {
+    try {
+        const token = req.params.token;
+        const data = jwt.verify(token, process.env.JWT_KEY)
+        const user = await User.findOne({ _id: data._id, resetPasswordToken: token });
+        if(!user){
+            res.status(400).send({
+                message: 'Bad request!'
+            });
+        }
+        const newpass = req.body.password;
+        user.password = newpass;
+        user.resetPasswordToken = '';
+        user.save();
+        res.status(200).send({
+            message: 'Change password success!'
+        });
+    } catch (err) {
+        next(err);
     }
 }

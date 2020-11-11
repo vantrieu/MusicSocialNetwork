@@ -1,19 +1,26 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const Account = require('../models/Account')
 
-const authUser = async(req, res, next) => {
+const authUser = async (req, res, next) => {
     try {
-        const token = req.header('Authorization').replace('Bearer ', '')
+        //const token = req.header('Authorization').replace('Bearer ', '')
+        const token = req.headers['x-access-token'];
         const data = jwt.verify(token, process.env.JWT_KEY)
-        const user = await User.findOne({ _id: data._id, 'tokens.token': token })
-        if (!user) {
+        const account = await Account.findOne({ _id: data._id })
+        if (!account) {
             throw new Error()
         }
-        res.locals.user = user;
-        next()
+        const date = new Date().getTime();
+        if (data.expireIn >= date) {
+            res.locals.account = account;
+            next()
+        }
+        res.status(401).send({
+            message: 'Not authorized to access this resource'
+        })
     } catch (err) {
-        res.status(401).send({ 
-            message: 'Not authorized to access this resource' 
+        res.status(401).send({
+            message: 'Not authorized to access this resource'
         })
     }
 }
