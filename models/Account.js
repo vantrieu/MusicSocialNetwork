@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 
 const accountSchema = mongoose.Schema({
     user_id: {
-        type: mongoose.Types.ObjectId,
+        type: String,
         trim: true
     },
     username: {
@@ -29,6 +29,12 @@ const accountSchema = mongoose.Schema({
                 throw new Error({ error: 'Invalid Email address' })
             }
         }
+    },
+    isBlock: {
+        type: Number,
+        required: true,
+        enum : [1, 0],
+        default: 0
     },
     role: {
         type: String,

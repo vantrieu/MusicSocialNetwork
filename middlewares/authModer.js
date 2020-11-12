@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Account = require('../models/Account');
 
-const authAdmin = async (req, res, next) => {
+const authModer = async (req, res, next) => {
     try {
         //const token = req.header('Authorization').replace('Bearer ', '');
         const token = req.headers['x-access-token'];
@@ -11,7 +11,7 @@ const authAdmin = async (req, res, next) => {
             throw new Error()
         }
         const date = Math.floor(Date.now() / 1000);
-        if (data.role === 'Administrator' && data.expireIn >= date) {
+        if ((data.role === 'Administrator' || data.role === 'Moderator') && data.expireIn >= date) {
             res.locals.account = account;
             next();
         }
@@ -21,4 +21,4 @@ const authAdmin = async (req, res, next) => {
         })
     }
 }
-module.exports = authAdmin;
+module.exports = authModer;

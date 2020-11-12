@@ -6,85 +6,27 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 
-exports.me = function (req, res) {
-    const user = res.locals.user;
-    user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
-    user._doc.createdate = moment(user._doc.createdate).format('DD/MM/YYYY');
-    const { password, __v, tokens, ...userNoField } = user._doc;
-    res.status(200).send({
-        'user': userNoField
-    });
-}
-
-exports.create = async function (req, res, next) {
+exports.me = function (req, res, next) {
     try {
-        const user = new User(req.body);
-        await user.save();
-        res.status(201).send({
-            message: 'User created!'
-        })
-    } catch (err) {
-        next(err);
-    }
-}
-
-exports.login = async function (req, res, next) {
-    try {
-        const pass = req.body.password;
-        const username = req.body.username;
-        const user = await User.findOne({ username });
-        if (user == null) {
-            res.status(200).send({ message: 'Invalid login credentials' });
-        }
-        const isPasswordMatch = await bcrypt.compare(pass, user.password)
-        if (!isPasswordMatch) {
-            res.status(200).send({ message: 'Invalid login credentials' });
-        }
-        if (!user) {
-            return res.status(401).send({
-                error: 'Login failed! Check authentication credentials'
-            })
-        }
-        const token = await user.generateAuthToken();
-        user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
-        user._doc.createdate = moment(user._doc.createdate).format('DD/MM/YYYY');
-        const { password, __v, tokens, ...userNoField } = user._doc;
-        res.send({
-            'user': userNoField,
-            'token': token
+        const account = res.locals.account.user_id;
+        User.findById({ _id: account }, function (err, user) {
+            if (err)
+                next(err);
+            else {
+                user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
+                const {__v,  ...userNoField } = user._doc;
+                res.status(200).send({
+                    'user': userNoField
+                });
+            }
         });
     } catch (err) {
         next(err);
     }
+
 }
 
-exports.logout = async function (req, res, next) {
-    try {
-        res.locals.user.tokens = res.locals.user.tokens.filter((token) => {
-            token.token != req.token
-        });
-        await res.locals.user.save();
-        res.status(200).send({
-            message: 'Success!'
-        });
-    } catch (err) {
-        next(err);
-    }
-}
-
-exports.logoutall = async function (req, res, next) {
-    try {
-        res.locals.user.tokens.splice(0, res.locals.user.tokens.length);
-        await res.locals.user.save();
-        res.status(200).send({
-            message: 'Success!'
-        });
-    } catch (err) {
-        next(err);
-    }
-}
-
-exports.uploadimg = function (req, res, next) {
+exports.uploadimg = async function (req, res, next) {
     try {
         if (!req.files) {
             res.send({
@@ -94,9 +36,9 @@ exports.uploadimg = function (req, res, next) {
         } else {
             try {
                 let avatar = req.files.avatar;
-                const user = res.locals.user;
+                const user = await User.findById({_id: res.locals.account.user_id});
                 if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
-                    let address = Date.now().toString() + avatar.name;
+                    let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
                     avatar.mv('./public/images/' + address);
                     try {
                         fs.unlinkSync('./public' + user.avatar);
@@ -188,79 +130,5 @@ exports.uploadmp3 = function (req, res, next) {
         }
     } catch (err) {
         res.status(500).send(err);
-    }
-}
-
-exports.geturlforgot = async function (req, res, next) {
-    try {
-        const email = req.body.email;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            res.status('200').send({
-                message: 'Vui lòng kiểm tra mail để tiếp tục quá trình quên mật khẩu!'
-            });
-        };
-        const tokenForgot = jwt.sign({ _id: user._id }, process.env.JWT_KEY)
-        user.resetPasswordToken = tokenForgot;
-        user.save();
-        // var transporter = nodemailer.createTransport({
-        //     service: 'Gmail',
-        //     auth: {
-        //         user: 'music.social.network.developer@gmail.com',
-        //         pass: 'Qpzm1092@'
-        //     }
-        // });
-        // var mainOptions = {
-        //     from: 'music.social.network.developer@gmail.com',
-        //     to: user.email,
-        //     subject: 'Reset Password',
-        //     text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-        //         'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-        //         'http://localhost:3000/uses/reset/' + user.resetPasswordToken + '\n\n' +
-        //         'If you did not request this, please ignore this email and your password will remain unchanged.\n'
-        // }
-        // transporter.sendMail(mainOptions, function (err, info) {
-        //     if (err) {
-        //         console.log(err)
-        //         return res.status(500).json({
-        //             message: 'Internal Server Error'
-        //         });
-        //     } else {
-        //         user.otp = otp;
-        //         user.save();
-        //         console.log(info);
-        //         return res.status(200).json({
-        //             message: 'OTP was send!'
-        //         });
-        //     }
-        // });
-        res.status('200').send({
-            message: 'http://localhost:3000/users/reset/' + user.resetPasswordToken
-        });
-    } catch (err) {
-        next(err);
-    }
-
-}
-
-exports.resetpassword = async function (req, res, next) {
-    try {
-        const token = req.params.token;
-        const data = jwt.verify(token, process.env.JWT_KEY)
-        const user = await User.findOne({ _id: data._id, resetPasswordToken: token });
-        if(!user){
-            res.status(400).send({
-                message: 'Bad request!'
-            });
-        }
-        const newpass = req.body.password;
-        user.password = newpass;
-        user.resetPasswordToken = '';
-        user.save();
-        res.status(200).send({
-            message: 'Change password success!'
-        });
-    } catch (err) {
-        next(err);
     }
 }
