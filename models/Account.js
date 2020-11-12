@@ -40,8 +40,7 @@ const accountSchema = mongoose.Schema({
         required: true,
         default: Date.now()
     },
-    resetPasswordToken: String,
-    resetPasswordExpires: Date
+    resetPasswordToken: String
 })
 
 accountSchema.pre('save', async function (next) {

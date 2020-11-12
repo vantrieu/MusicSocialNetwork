@@ -24,7 +24,7 @@ const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
 
 //Routes
-app.use('/account', accountRoute);
+app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
 
 //Connect mongodb
