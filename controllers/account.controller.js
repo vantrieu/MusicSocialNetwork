@@ -19,15 +19,20 @@ exports.login = async function (req, res, next) {
         const username = req.body.username;
         const account = await Account.findOne({ username });
         if (account == null) {
-            res.status(200).send({ message: 'Invalid login credentials' });
+            return res.status(200).send({ message: 'Invalid login credentials' });
         }
         const isPasswordMatch = await bcrypt.compare(pass, account.password)
         if (!isPasswordMatch) {
-            res.status(200).send({ message: 'Invalid login credentials' });
+            return res.status(200).send({ message: 'Invalid login credentials' });
         }
         if (!account) {
             return res.status(401).send({
                 error: 'Login failed! Check authentication credentials'
+            })
+        }
+        if(account.islock === 1) {
+            return res.status(401).json({
+                    error: 'Account is locked'
             })
         }
         const date = Math.floor(Date.now() / 1000);
@@ -35,7 +40,7 @@ exports.login = async function (req, res, next) {
         const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
         const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
         const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-        res.send({
+        return res.send({
             'user_id': account._doc.user_id,
             'x-access-token': accessToken,
             'expireIn': expireAccessToken,
@@ -52,7 +57,7 @@ exports.refreshtoken = function (req, res, next) {
         const date = new Date().getTime();
         const expireAccessToken = date + process.env.JWT_TOKEN_EXPIRATION;
         const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-        res.send({
+        return res.send({
             'user_id': account.username,
             'x-access-token': accessToken,
             'expireIn': expireAccessToken
@@ -67,7 +72,7 @@ exports.fortgotpassword = async function (req, res, next) {
         const email = req.body.email;
         const account = await Account.findOne({ email: email });
         if (!account) {
-            res.status('200').send({
+            return res.status('200').send({
                 message: 'Vui lòng kiểm tra mail để tiếp tục quá trình quên mật khẩu!'
             });
         };
@@ -115,7 +120,7 @@ exports.resetpassword = function (req, res, next) {
     try {
         const account = res.locals.account;
         if (!account) {
-            res.status(400).send({
+            return res.status(400).send({
                 message: 'Bad request!'
             });
         }
@@ -123,7 +128,7 @@ exports.resetpassword = function (req, res, next) {
         account.password = newpass;
         account.resetPasswordToken = '';
         account.save();
-        res.status(200).send({
+        return res.status(200).send({
             message: 'Reset password success!'
         });
     } catch (err) {
@@ -138,7 +143,7 @@ exports.changepassword = function (req, res, next) {
         const password = req.body.password;
         account.password = password;
         account.save();
-        res.status(200).json({
+        return res.status(200).json({
             message: 'Change password success!'
         });
     } catch (err) {
@@ -164,11 +169,11 @@ exports.registeraccount = function (req, res, next) {
                         user.birthday = req.body.birthday;
                         user.gender = req.body.gender;
                         user.save();
-                        res.status(201).send({
+                        return res.status(201).send({
                             message: 'Account created!'
                         })
                     } else {
-                        return res.status(500).json({
+                        return res. res.status(500).json({
                             message: 'username hoặc email đã tồn tại'
                         });
                     }
@@ -200,11 +205,11 @@ exports.registermoderator = function (req, res, next) {
                         user.birthday = req.body.birthday;
                         user.gender = req.body.gender;
                         user.save();
-                        res.status(201).send({
+                        return res.status(201).send({
                             message: 'Account created!'
                         })
                     } else {
-                        return res.status(500).json({
+                        return res. res.status(500).json({
                             message: 'username hoặc email đã tồn tại'
                         });
                     }
@@ -217,31 +222,99 @@ exports.registermoderator = function (req, res, next) {
     }
 }
 
-exports.getlistaccount = async function (req, res, next) {
+exports.getlistaccountactive = async function (req, res, next) {
     try {
-        const account = await Account.find();
+        const account = await Account.find({islock: 0});
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
             const {__v, password, user_id, role, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
-        res.send(temp);
+        return res.send(temp);
     } catch (err) {
         next(err);
     }
 }
 
-exports.getlistmoderator = async function (req, res, next) {
+exports.getlistmoderatoractive = async function (req, res, next) {
     try {
-        const account = await Account.find({role: 'Moderator'});
+        const account = await Account.find({role: 'Moderator', islock: 0});
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
             const {__v, password, user_id, role, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
-        res.send(temp);
+        return res.send(temp);
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.getlistaccountlock = async function (req, res, next) {
+    try {
+        const account = await Account.find({islock: 1});
+        var temp = [];
+        account.forEach(function(item){
+            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
+            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            temp.push(accNoField); 
+        });
+        return res.send(temp);
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.getlistmoderatorlock = async function (req, res, next) {
+    try {
+        const account = await Account.find({role: 'Moderator', islock: 1});
+        var temp = [];
+        account.forEach(function(item){
+            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
+            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            temp.push(accNoField); 
+        });
+        return res.send(temp);
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.lockaccount = function (req, res, next) {
+    try {
+        let user_id = req.body.id;
+        Account.findOne({_id: user_id}, function (err, account) {
+            if(err)
+                next(err);
+            else {
+                account.islock = 1;
+                account.save();
+                return res.status(200).json({
+                    message: 'Account lock is successful'
+                })
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.unlockaccount = function (req, res, next) {
+    try {
+        let user_id = req.body.id;
+        Account.findOne({_id: user_id}, function (err, account) {
+            if(err)
+                next(err);
+            else {
+                account.islock = 0;
+                account.save();
+                return res.status(200).json({
+                    message: 'Account unlock is successful'
+                })
+            }
+        });
     } catch (err) {
         next(err);
     }

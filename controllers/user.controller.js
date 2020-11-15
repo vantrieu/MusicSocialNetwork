@@ -15,7 +15,7 @@ exports.me = function (req, res, next) {
             else {
                 user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
                 const {__v,  ...userNoField } = user._doc;
-                res.status(200).send({
+                return res.status(200).send({
                     'user': userNoField
                 });
             }
@@ -29,7 +29,7 @@ exports.me = function (req, res, next) {
 exports.uploadimg = async function (req, res, next) {
     try {
         if (!req.files) {
-            res.send({
+            return res.send({
                 status: false,
                 message: 'No file uploaded'
             });
@@ -47,11 +47,11 @@ exports.uploadimg = async function (req, res, next) {
                     }
                     user.avatar = '/images/' + address;
                     user.save();
-                    return res.status(201).json({
+                    return res. res.status(201).json({
                         message: 'File uploded successfully'
                     });
                 } else {
-                    return res.status(400).json({
+                    return res. res.status(400).json({
                         message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
                     });
                 }
@@ -60,7 +60,7 @@ exports.uploadimg = async function (req, res, next) {
             }
         }
     } catch (err) {
-        res.status(500).send(err);
+        return res.status(500).send(err);
     }
 
 };
@@ -70,7 +70,7 @@ exports.getotp = async function (req, res, next) {
         const username = req.body.username;
         const user = await User.findOne({ username: username });
         if (user == null) {
-            return res.status(201).json({
+            return res. res.status(201).json({
                 message: 'User not found'
             });
         }
@@ -91,14 +91,14 @@ exports.getotp = async function (req, res, next) {
         transporter.sendMail(mainOptions, function (err, info) {
             if (err) {
                 console.log(err)
-                return res.status(500).json({
+                return res. res.status(500).json({
                     message: 'Internal Server Error'
                 });
             } else {
                 user.otp = otp;
                 user.save();
                 console.log(info);
-                return res.status(200).json({
+                return res. res.status(200).json({
                     message: 'OTP was send!'
                 });
             }
@@ -111,24 +111,24 @@ exports.getotp = async function (req, res, next) {
 exports.uploadmp3 = function (req, res, next) {
     try {
         if (!req.files) {
-            res.send({
+            return res.send({
                 status: false,
                 message: 'No file uploaded'
             });
         } else {
             let fileMusic = req.files.music;
             if (fileMusic.mimetype != 'audio/mpeg') {
-                res.status(400).send({
+                return res.status(400).send({
                     message: 'Chỉ chấp nhận tập tin định dạng mp3!'
                 });
             } else {
                 fileMusic.mv('./public/musics/' + fileMusic.name);
-                res.status(201).send({
+                return res.status(201).send({
                     message: 'File is uploaded'
                 });
             }
         }
     } catch (err) {
-        res.status(500).send(err);
+        return res.status(500).send(err);
     }
 }

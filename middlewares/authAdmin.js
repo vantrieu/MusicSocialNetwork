@@ -16,7 +16,7 @@ const authAdmin = async (req, res, next) => {
             next();
         }
     } catch (err) {
-        res.status(401).send({
+        return res.status(401).send({
             message: 'Not authorized to access this resource'
         })
     }

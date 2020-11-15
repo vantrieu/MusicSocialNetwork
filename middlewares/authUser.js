@@ -15,13 +15,13 @@ const authUser = async (req, res, next) => {
             res.locals.account = account;
             next()
         } else {
-            res.status(401).send({
+            return res.status(401).send({
                 message: 'Not authorized to access this resource'
             })
         }
 
     } catch (err) {
-        res.status(401).send({
+        return res.status(401).send({
             message: 'Not authorized to access this resource'
         })
     }

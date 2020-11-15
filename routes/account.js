@@ -15,7 +15,12 @@ router.post('/reset/:token',authResetPass, accountController.resetpassword);
 router.post('/change-password', authUser, accountController.changepassword);
 router.post('/register-account', accountController.registeraccount);
 router.post('/register-moderator', authAdmin, accountController.registermoderator);
-router.get('/list-account', authModer, accountController.getlistaccount);
-router.get('/list-moderator', authModer, accountController.getlistmoderator);
+router.get('/list-account-active', authModer, accountController.getlistaccountactive);
+router.get('/list-moderator-active', authModer, accountController.getlistmoderatoractive);
+router.get('/list-account-lock', authModer, accountController.getlistaccountlock);
+router.get('/list-moderator-lock', authModer, accountController.getlistmoderatorlock);
+router.post('/lock-user', authModer, accountController.lockaccount);
+router.post('/unlock-user', authModer, accountController.unlockaccount);
+
 
 module.exports = router;

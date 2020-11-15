@@ -17,7 +17,7 @@ app.use(require('morgan')('combined'))
 app.use(fileUpload({ createParentPath: true }));
 app.use(express.static(__dirname + '/public'));
 app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/public/index.html');
+    return res.sendFile(__dirname + '/public/index.html');
 })
 
 //Import Routes

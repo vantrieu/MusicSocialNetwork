@@ -30,7 +30,7 @@ const accountSchema = mongoose.Schema({
             }
         }
     },
-    isBlock: {
+    islock: {
         type: Number,
         required: true,
         enum : [1, 0],
