@@ -54,13 +54,18 @@ exports.login = async function (req, res, next) {
 exports.refreshtoken = function (req, res, next) {
     try {
         const account = res.locals.account;
-        const date = new Date().getTime();
-        const expireAccessToken = date + process.env.JWT_TOKEN_EXPIRATION;
+        const date = Math.floor(Date.now() / 1000);
+        // const expireAccessToken = date + process.env.JWT_TOKEN_EXPIRATION;
+        // const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
         const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
         return res.send({
             'user_id': account.username,
             'x-access-token': accessToken,
-            'expireIn': expireAccessToken
+            'expireIn': expireAccessToken,
+            'x-refresh-token': refreshToken
         });
     } catch (err) {
         next(err);
@@ -163,6 +168,7 @@ exports.registeraccount = function (req, res, next) {
                         account.password = req.body.password;
                         account.email = req.body.email;
                         account.user_id = user._id;
+                        account.phonenumber = req.body.phonenumber;
                         account.save();
                         user.firstname = req.body.firstname;
                         user.lastname = req.body.lastname;
@@ -199,6 +205,7 @@ exports.registermoderator = function (req, res, next) {
                         account.email = req.body.email;
                         account.user_id = user._id;
                         account.role = 'Moderator';
+                        account.phonenumber = req.body.phonenumber;
                         account.save();
                         user.firstname = req.body.firstname;
                         user.lastname = req.body.lastname;
@@ -228,7 +235,7 @@ exports.getlistaccountactive = async function (req, res, next) {
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            const {__v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
         return res.send(temp);
@@ -243,7 +250,7 @@ exports.getlistmoderatoractive = async function (req, res, next) {
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            const {__v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
         return res.send(temp);
@@ -258,7 +265,7 @@ exports.getlistaccountlock = async function (req, res, next) {
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            const {__v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
         return res.send(temp);
@@ -273,7 +280,7 @@ exports.getlistmoderatorlock = async function (req, res, next) {
         var temp = [];
         account.forEach(function(item){
             item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const {__v, password, user_id, role, ...accNoField } = item._doc;
+            const {__v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
             temp.push(accNoField); 
         });
         return res.send(temp);

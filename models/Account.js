@@ -19,6 +19,12 @@ const accountSchema = mongoose.Schema({
         required: true,
         minLength: 8
     },
+    phonenumber: {
+        type: String,
+        required: true,
+        minLength: 10,
+        maxLength: 11
+    },
     email: {
         type: String,
         required: true,
@@ -41,11 +47,6 @@ const accountSchema = mongoose.Schema({
         required: true,
         default: 'User'
     },
-    createdate: {
-        type: Date,
-        required: true,
-        default: Date.now()
-    },
     resetPasswordToken: String
 })
 
@@ -63,4 +64,5 @@ accountSchema.methods.generateAuthToken = async function () {
     return token
 }
 
+accountSchema.set('timestamps', true);
 module.exports = mongoose.model('Account', accountSchema)

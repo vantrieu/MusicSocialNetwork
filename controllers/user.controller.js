@@ -1,29 +1,30 @@
 const moment = require('moment')
 const User = require('../models/User');
+const Follow = require('../models/Follow');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
+const { listIndexes } = require('../models/Follow');
 
 exports.me = function (req, res, next) {
     try {
         const account = res.locals.account.user_id;
-        User.findById({ _id: account }, function (err, user) {
+        User.findById({ _id: account }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender'], function (err, user) {
             if (err)
                 next(err);
             else {
                 user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
-                const {__v,  ...userNoField } = user._doc;
-                return res.status(200).send({
-                    'user': userNoField
+                //const { __v, createdAt, updatedAt, ...userNoField } = user._doc;
+                return res.status(200).json({
+                    'user': user._doc
                 });
             }
         });
     } catch (err) {
         next(err);
     }
-
 }
 
 exports.uploadimg = async function (req, res, next) {
@@ -36,7 +37,7 @@ exports.uploadimg = async function (req, res, next) {
         } else {
             try {
                 let avatar = req.files.avatar;
-                const user = await User.findById({_id: res.locals.account.user_id});
+                const user = await User.findById({ _id: res.locals.account.user_id });
                 if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
                     let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
                     avatar.mv('./public/images/' + address);
@@ -47,11 +48,11 @@ exports.uploadimg = async function (req, res, next) {
                     }
                     user.avatar = '/images/' + address;
                     user.save();
-                    return res. res.status(201).json({
+                    return res.res.status(201).json({
                         message: 'File uploded successfully'
                     });
                 } else {
-                    return res. res.status(400).json({
+                    return res.res.status(400).json({
                         message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
                     });
                 }
@@ -65,46 +66,102 @@ exports.uploadimg = async function (req, res, next) {
 
 };
 
-exports.getotp = async function (req, res, next) {
+exports.changeprofile = function (req, res, next) {
     try {
-        const username = req.body.username;
-        const user = await User.findOne({ username: username });
-        if (user == null) {
-            return res. res.status(201).json({
-                message: 'User not found'
-            });
-        }
-        var otp = Math.floor(Math.random() * 1000000);
-        var transporter = nodemailer.createTransport({
-            service: 'Gmail',
-            auth: {
-                user: 'music.social.network.developer@gmail.com',
-                pass: 'Qpzm1092@'
-            }
-        });
-        var mainOptions = {
-            from: 'music.social.network.developer@gmail.com',
-            to: user.email,
-            subject: 'Test Nodemailer',
-            html: '<p>You have got a new message</b><ul><li>Username:' + req.body.username + '</li></ul>'
-        }
-        transporter.sendMail(mainOptions, function (err, info) {
-            if (err) {
-                console.log(err)
-                return res. res.status(500).json({
-                    message: 'Internal Server Error'
-                });
-            } else {
-                user.otp = otp;
-                user.save();
-                console.log(info);
-                return res. res.status(200).json({
-                    message: 'OTP was send!'
+        const account = res.locals.account.user_id;
+        User.findById({ _id: account }, function (req, err, user) {
+            if (err)
+                next(err);
+            else {
+                if (!isNaN(req.body.firstname))
+                    user._doc.firstname = req.body.firstname;
+                if (!isNaN(req.body.lastname))
+                    user._doc.lastname = req.body.lastname;
+                if (!isNaN(req.body.birthday))
+                    user._doc.birthday = req.body.birthday;
+                if (!isNaN(req.body.gender))
+                    user._doc.gender = req.body.gender;
+                return res.status(200).json({
+                    message: 'Change profile success!'
                 });
             }
         });
     } catch (err) {
         next(err);
+    }
+}
+
+exports.createfollow = function (req, res, next) {
+    try {
+        let follow_id = res.locals.account.user_id;
+        let user_id = req.body.id;
+        let follow = new Follow();
+        follow.follow_id = follow_id;
+        follow.user_id = user_id;
+        follow.save();
+        return res.status(201).json({
+            message: 'Follow user success!'
+        });
+    } catch {
+        next(err)
+    }
+}
+
+exports.getfollowme = async function (req, res, next) {
+    try {
+        var lstfollow_id = [];
+        let follow = await Follow.find({ user_id: res.locals.account.user_id });
+        follow.forEach(function (item) {
+            lstfollow_id.push(item.follow_id)
+        });
+        let user = await User.find({}).where('_id').in(lstfollow_id);
+        var lstuserfollow = [];
+        user.forEach(function (item) {
+            const { __v, gender, birthday, createdAt, updatedAt, ...userNoField } = item._doc;
+            lstuserfollow.push(userNoField);
+        });
+        return res.status(200).json({
+            users: lstuserfollow
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.getfollowbyme = async function (req, res, next) {
+    try {
+        var lstfollow_id = [];
+        let follow = await Follow.find({ follow_id: res.locals.account.user_id });
+        follow.forEach(function (item) {
+            lstfollow_id.push(item.user_id)
+        });
+        let user = await User.find({}).where('_id').in(lstfollow_id);
+        var lstuserfollow = [];
+        user.forEach(function (item) {
+            const { __v, gender, birthday, createdAt, updatedAt, ...userNoField } = item._doc;
+            lstuserfollow.push(userNoField);
+        });
+        return res.status(200).json({
+            users: lstuserfollow
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+exports.unfollow = function (req, res, next) {
+    try {
+        Follow.findOneAndDelete({ follow_id: res.locals.account.user_id, user_id: req.body.id }, function (err) {
+            if (err)
+                next(err);
+            else {
+                return res.status(201).json({
+                    message: 'UnFollow user success!'
+                });
+            }
+        })
+    } catch {
+        next(err)
     }
 }
 

@@ -52,7 +52,7 @@ mongoose.connection.once('open', function () {
             account.email = 'admin@gmail.com';
             account.user_id = user._id;
             account.role = 'Administrator';
-            account.createdate = Date.now();
+            account.phonenumber = '03867537750';
             account.save();
             user.firstname = 'Super';
             user.lastname = 'Admin';

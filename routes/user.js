@@ -8,7 +8,11 @@ const router = express.Router();
 
 router.get('/me', authUser, userController.me);
 router.post('/changeavatar', authUser, userController.uploadimg);
-// router.get('/otp', userController.getotp);
+router.post('/update-profile', authUser, userController.changeprofile);
+router.post('/follow-user', authUser, userController.createfollow);
+router.get('/get-follow-me', authUser, userController.getfollowme);
+router.get('/get-follow-by-me', authUser, userController.getfollowbyme);
+router.post('/unfollow', authUser, userController.unfollow);
 // router.post('/upload', authUser, userController.uploadmp3);
 // router.post('/geturlforgot', userController.geturlforgot);
 // router.post('/reset/:token', userController.resetpassword);
