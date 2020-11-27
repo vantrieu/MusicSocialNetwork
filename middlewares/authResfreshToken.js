@@ -12,7 +12,7 @@ const authResfreshToken = async (req, res, next) => {
         if (!account) {
             throw new Error()
         }
-        const date = new Date().getTime();
+        const date = Math.floor(Date.now() / 1000);
         if (data_refresh_token.expireIn >= date && data_access_token.expireIn >= date) {
             res.locals.account = account;
             next()
