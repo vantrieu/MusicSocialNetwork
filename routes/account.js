@@ -6,7 +6,8 @@ const authResetPass = require('../middlewares/authResetPass');
 const authModer = require('../middlewares/authModer');
 const accountController = require('../controllers/account.controller');
 
-const router = express.Router();
+//const router = express.Router();
+var router = require("express-promise-router")();
 
 router.post('/login', accountController.login);
 router.post('/refresh-token', authRefreshToken, accountController.refreshtoken);

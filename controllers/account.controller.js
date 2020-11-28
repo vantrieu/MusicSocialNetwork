@@ -13,42 +13,40 @@ function isEmpty(obj) {
     return true;
 }
 
-exports.login = function (req, res, next) {
+exports.login = async function (req, res, next) {
     const pass = req.body.password;
     const username = req.body.username;
-    Account.findOne({ username }).then(async account => {
-        // return result if the username is not found in the database
-        if (account == null) {
-            return res.status(200).json({
-                message: 'Login failed! Username or password is incorrect!'
-            });
-        }
-        const isPasswordMatch = await bcrypt.compare(pass, account.password)
-        // return result if password does not match
-        if (!isPasswordMatch) {
-            return res.status(200).json({
-                message: 'Login failed! Username or password is incorrect!'
-            });
-        }
-        // return result if the account is locked
-        if (account.islock === 1) {
-            return res.status(401).json({
-                mesage: 'Login failed! The account is locked!'
-            })
-        }
-        const date = Math.floor(Date.now() / 1000);
-        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
-        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
+    const account = await Account.findOne({ username });
+    // return result if the username is not found in the database
+    if (account == null) {
         return res.status(200).json({
-            'expireIn': expireAccessToken,
-            'role': account.role,
-            'x-access-token': accessToken,
-            'x-refresh-token': refreshToken
+            message: 'Login failed! Username or password is incorrect!'
         });
-    })
-        .catch(err => next(err));
+    }
+    const isPasswordMatch = await bcrypt.compare(pass, account.password)
+    // return result if password does not match
+    if (!isPasswordMatch) {
+        return res.status(200).json({
+            message: 'Login failed! Username or password is incorrect!'
+        });
+    }
+    // return result if the account is locked
+    if (account.islock === 1) {
+        return res.status(401).json({
+            mesage: 'Login failed! The account is locked!'
+        })
+    }
+    const date = Math.floor(Date.now() / 1000);
+    const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+    const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+    const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+    const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
+    return res.status(200).json({
+        'expireIn': expireAccessToken,
+        'role': account.role,
+        'x-access-token': accessToken,
+        'x-refresh-token': refreshToken
+    });
 }
 
 exports.refreshtoken = function (req, res, next) {
@@ -218,7 +216,7 @@ exports.registermoderator = function (req, res, next) {
                                         message: 'Account created!'
                                     })
                                 }).catch(err => {
-                                    account.deleteOne({_id: account._id});
+                                    account.deleteOne({ _id: account._id });
                                     next(err);
                                 })
                             }).catch(err => next(err));
