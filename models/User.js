@@ -25,18 +25,18 @@ const userSchema = mongoose.Schema({
         enum : ['Nam','Nữ', 'Không muốn tiết lộ'],
         default: 'Không muốn tiết lộ'
     },
-    playlist_ids: {
-        type: [String],
-        default: []
-    },
-    album_ids: {
-        type:[String],
-        default: []
-    },
-    track_ids: {
-        type: [String],
-        default: []
-    }
+    playlists: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Playlist'
+    }],
+    albums: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Album'
+    }],
+    tracks: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Track'
+    }]
 })
 
 userSchema.set('timestamps', true);

@@ -4,7 +4,8 @@ const userController = require('../controllers/user.controller');
 const multer  = require('multer');
 const path = require('path');
 
-const router = express.Router();
+// const router = express.Router();
+const router = require("express-promise-router")();
 
 router.get('/me', authUser, userController.me);
 router.post('/changeavatar', authUser, userController.uploadimg);

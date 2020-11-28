@@ -10,6 +10,10 @@ const trackSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    tracklink: {
+        type: String,
+        default: ''
+    },
     trackname: {
         type: String,
         required: true
@@ -22,19 +26,19 @@ const trackSchema = mongoose.Schema({
         required: true,
         default: 0
     },
-    comment_ids: {
-        type: [String],
-        default: []
-    },
     album_id: {
         type: String,
-        required: true,
+        default: ''
     },
-    playlist_ids: {
-        type: [String],
-        default: []
-    }
+    comments: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Comment'
+    }],
+    playlists: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Playlist'
+    }]
 })
 
 trackSchema.set('timestamps', true);
-module.exports = mongoose.model('Follow', trackSchema)
+module.exports = mongoose.model('Track', trackSchema)

@@ -23,10 +23,12 @@ app.get('/', function (req, res) {
 //Import Routes
 const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
+const trackRoute = require('./routes/track');
 
 //Routes
 app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
+app.use('/tracks', trackRoute);
 
 //Connect mongodb
 mongoose.connect(
