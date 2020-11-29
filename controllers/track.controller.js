@@ -46,7 +46,8 @@ exports.createTrack = async function (req, res, next) {
 }
 
 exports.playmusic = async function (req, res, next) {
-    const track = await Track.findById(req.params.trackID);
+    const id = req.value.params.trackID;
+    const track = await Track.findById(id);
     var link = path.join(track.tracklink);
     track.total = track.total + 1;
     await track.save();

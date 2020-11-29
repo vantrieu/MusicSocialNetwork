@@ -25,4 +25,4 @@ const albumSchema = mongoose.Schema({
 });
 
 albumSchema.set('timestamps', true);
-module.exports = mongoose.model('Follow', albumSchema)
+module.exports = mongoose.model('Album', albumSchema)

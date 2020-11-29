@@ -12,4 +12,4 @@ const historySchema = mongoose.Schema({
 });
 
 historySchema.set('timestamps', true);
-module.exports = mongoose.model('Follow', historySchema);
+module.exports = mongoose.model('History', historySchema);

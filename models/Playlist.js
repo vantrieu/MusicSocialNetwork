@@ -24,4 +24,4 @@ const playlistSchema = mongoose.Schema({
 });
 
 playlistSchema.set('timestamps', true);
-module.exports = mongoose.model('Follow', playlistSchema);
+module.exports = mongoose.model('Playlist', playlistSchema);
