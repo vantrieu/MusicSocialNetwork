@@ -5,6 +5,7 @@ const authRefreshToken = require('../middlewares/authResfreshToken');
 const authResetPass = require('../middlewares/authResetPass');
 const authModer = require('../middlewares/authModer');
 const accountController = require('../controllers/account.controller');
+const {validateBody, schemas} = require('../helpers/validate-handler');
 
 //const router = express.Router();
 var router = require("express-promise-router")();
@@ -14,7 +15,7 @@ router.post('/refresh-token', authRefreshToken, accountController.refreshtoken);
 router.post('/forgot-password', accountController.fortgotpassword);
 router.post('/reset/:token',authResetPass, accountController.resetpassword);
 router.post('/change-password', authUser, accountController.changepassword);
-router.post('/register-account', accountController.registeraccount);
+router.post('/register-account', validateBody(schemas.accountSchema), accountController.registeraccount);
 router.post('/register-moderator', authAdmin, accountController.registermoderator);
 router.get('/list-account-active', authModer, accountController.getlistaccountactive);
 router.get('/list-moderator-active', authModer, accountController.getlistmoderatoractive);

@@ -151,21 +151,21 @@ exports.registeraccount = function (req, res, next) {
     try {
         let account = new Account();
         let user = new User();
-        Account.find({ $or: [{ username: req.body.username }, { email: req.body.email }] },
+        Account.find({ $or: [{ username: req.value.body.username }, { email: req.value.body.email }] },
             function (err, docs) {
                 if (!err) {
                     if (isEmpty(docs)) {
-                        account.username = req.body.username;
-                        account.password = req.body.password;
-                        account.email = req.body.email;
+                        account.username = req.value.body.username;
+                        account.password = req.value.body.password;
+                        account.email = req.value.body.email;
                         account.user_id = user._id;
-                        account.phonenumber = req.body.phonenumber;
+                        account.phonenumber = req.value.body.phonenumber;
                         account.save()
                             .then(() => {
-                                user.firstname = req.body.firstname;
-                                user.lastname = req.body.lastname;
-                                user.birthday = req.body.birthday;
-                                user.gender = req.body.gender;
+                                user.firstname = req.value.body.firstname;
+                                user.lastname = req.value.body.lastname;
+                                user.birthday = req.value.body.birthday;
+                                user.gender = req.value.body.gender;
                                 user.save().then(() => {
                                     return res.status(201).json({
                                         message: 'Account created!'
