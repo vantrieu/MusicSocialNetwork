@@ -189,3 +189,10 @@ exports.uploadmp3 = function (req, res, next) {
         return res.status(500).send(err);
     }
 }
+
+exports.mymusic = async function (req, res, next) {
+    const result = (await User.findById(res.locals.account.user_id, ['tracks']).populate('tracks')).tracks;
+    return res.status(200).json({
+        'tracks': result
+    })
+}

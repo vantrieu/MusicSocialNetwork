@@ -14,6 +14,7 @@ router.post('/follow-user', authUser, userController.createfollow);
 router.get('/get-follow-me', authUser, userController.getfollowme);
 router.get('/get-follow-by-me', authUser, userController.getfollowbyme);
 router.post('/unfollow', authUser, userController.unfollow);
+router.get('/my-music', authUser, userController.mymusic);
 // router.post('/upload', authUser, userController.uploadmp3);
 // router.post('/geturlforgot', userController.geturlforgot);
 // router.post('/reset/:token', userController.resetpassword);

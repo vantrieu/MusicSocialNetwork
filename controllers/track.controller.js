@@ -55,7 +55,6 @@ exports.playmusic = async function (req, res, next) {
 }
 
 exports.listmusic = async function (req, res, next) {
-    const account = res.locals.account;
     const tracks = await Track.find({}, 
         ['total', 'album_id', 'playlists', '_id', 'trackname', 'description', 'background']);
     return res.status(200).json({
