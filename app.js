@@ -3,16 +3,15 @@ const app = express();
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-//const errorhandler = require('./helpers/error-handler');
 const Account = require('./models/Account');
 const User = require('./models/User');
 const fileUpload = require('express-fileupload');
+const responsehandler = require('./helpers/respone-handler');
 require('dotenv/config');
 
 //Middlewares
 app.use(cors());
 app.use(bodyParser.json());
-//app.use(errorhandler);
 app.use(require('morgan')('combined'))
 app.use(fileUpload({ createParentPath: true }));
 app.use(express.static(__dirname + '/public'));
@@ -71,7 +70,7 @@ mongoose.connection.once('open', function () {
 
 //Catch 404 Errors and forward them to error handler
 app.use((req, res, next) => {
-    const err = new Error('Not Found');
+    const err = new Error('Not found');
     err.status = 404;
     next(err);
 });
@@ -80,11 +79,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     const error = app.get('env') === 'development' ? err : {};
     const status = err.status || 500;
-    return res.status(status).json({
-        error: {
-            message: error.message
-        }
-    })
+    return responsehandler(res, status, error.message, null, null);
 });
 
 //Start listening to the server

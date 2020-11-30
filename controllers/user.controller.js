@@ -7,6 +7,8 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const { listIndexes } = require('../models/Follow');
+const Album = require('../models/Album');
+const Track = require('../models/Track');
 
 exports.me = function (req, res, next) {
     try {
@@ -64,7 +66,7 @@ exports.uploadimg = async function (req, res, next) {
         return res.status(500).send(err);
     }
 
-};
+}
 
 exports.changeprofile = function (req, res, next) {
     try {
@@ -195,4 +197,44 @@ exports.mymusic = async function (req, res, next) {
     return res.status(200).json({
         'tracks': result
     })
+}
+
+exports.createAlbum = async function (req, res, next) {
+    const user_id = res.locals.account.user_id;
+    const { albumname, description } = req.value.body;
+    let album = new Album({ user_id, albumname, description });
+    let background = req.files.background;
+    if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
+        let address = Math.floor(Date.now() / 1000).toString() + background.name;
+        background.mv('./public/images/' + address);
+        album.background = process.env.ENVIROMENT + '/images/' + address;
+    } else {
+        return res.res.status(400).json({
+            message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
+        });
+    }
+    await album.save()
+        .then(() => {
+            return res.status(201).json({
+                message: 'Create success!'
+            })
+        })
+        .catch(() => {
+            fs.unlinkSync('./public/images/' + address);
+        })
+}
+
+exports.addListTrackAlbum = async function (req, res, next) {
+    const { listtrack, albumid } = req.body;
+    const album = await Album.findById({ _id: albumid });
+    listtrack.forEach(element => {
+        album.tracks.push(element);
+        Track.findById({ _id: element })
+            .then(track => {
+                track.album_id = albumid;
+                track.save()
+            })
+    });
+    await album.save();
+    return res.status(200).json(album);
 }

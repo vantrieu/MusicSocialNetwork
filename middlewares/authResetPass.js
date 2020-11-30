@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const Account = require('../models/Account')
+const responsehandler = require('../helpers/respone-handler');
 
 const authResetPass = async (req, res, next) => {
     try {
@@ -15,14 +16,12 @@ const authResetPass = async (req, res, next) => {
             res.locals.account = account;
             next()
         } else {
-            return res.status(401).send({
-                message: 'Not authorized to access this resource'
-            })
+            const message = 'Not authorized to access this resource';
+            return responsehandler(res, 401, message, null, null);
         }
     } catch (err) {
-        return res.status(401).send({
-            message: 'Not authorized to access this resource'
-        })
+        const message = 'Not authorized to access this resource';
+        return responsehandler(res, 401, message, null, null);
     }
 }
 module.exports = authResetPass;

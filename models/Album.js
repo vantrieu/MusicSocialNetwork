@@ -14,11 +14,10 @@ const albumSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    track_ids: {
-        type = [String],
-        required: true,
-        default: []
-    },
+    tracks: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Track'
+    }],
     description: {
         type: String
     }

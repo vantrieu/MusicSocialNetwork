@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const moment = require('moment');
+const responsehandler = require('../helpers/respone-handler');
 
 function isEmpty(obj) {
     for (var key in obj) {
@@ -19,34 +20,33 @@ exports.login = async function (req, res, next) {
     const account = await Account.findOne({ username });
     // return result if the username is not found in the database
     if (account == null) {
-        return res.status(200).json({
-            message: 'Login failed! Username or password is incorrect!'
-        });
+        const message = 'Login failed! Username or password is incorrect'
+        return responsehandler(res, 200, message, null, null)
     }
     const isPasswordMatch = await bcrypt.compare(pass, account.password)
     // return result if password does not match
     if (!isPasswordMatch) {
-        return res.status(200).json({
-            message: 'Login failed! Username or password is incorrect!'
-        });
+        const message = 'Login failed! Username or password is incorrect'
+        return responsehandler(res, 200, message, null, null)
     }
     // return result if the account is locked
     if (account.islock === 1) {
-        return res.status(401).json({
-            mesage: 'Login failed! The account is locked!'
-        })
+        const mesage = 'Login failed! The account is locked'
+        return responsehandler(res, 200, message, null, null)
     }
     const date = Math.floor(Date.now() / 1000);
     const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
     const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
     const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
     const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-    return res.status(200).json({
+    const message = 'Successfully';
+    const data = {
         'expireIn': expireAccessToken,
         'role': account.role,
         'x-access-token': accessToken,
         'x-refresh-token': refreshToken
-    });
+    };
+    return responsehandler(res, 200, message, data, null)
 }
 
 exports.refreshtoken = function (req, res, next) {

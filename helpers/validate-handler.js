@@ -6,12 +6,10 @@ const validateBody = (schema) => {
         if (validatorResult.error) {
             return res.status(400).json(validatorResult.error);
         } else {
-            
+
             if (!req.value) req.value = {};
             if (!req.value['body']) req.value.body = {};
             req.value.body = validatorResult.value;
-            //console.log(req.value.body);
-            //req.value.params[name] = req.params[name];
             next();
         }
     }
@@ -45,6 +43,11 @@ const schemas = {
         lastname: Joi.string().min(2).max(50).required(),
         birthday: Joi.date().required(),
         gender: Joi.string()
+    }),
+
+    albumSchema: Joi.object().keys({
+        albumname: Joi.string().min(5).required(),
+        description: Joi.string()
     })
 }
 
