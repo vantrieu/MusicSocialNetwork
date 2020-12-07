@@ -15,10 +15,10 @@ const commentSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    reply_ids: {
-        type: [String],
-        default: []
-    }
+    reply_ids: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Comment'
+    }]
 })
 commentSchema.set('timestamps', true);
 module.exports = mongoose.model('Comment', commentSchema)

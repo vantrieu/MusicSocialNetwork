@@ -50,31 +50,26 @@ exports.login = async function (req, res, next) {
 }
 
 exports.refreshtoken = function (req, res, next) {
-    try {
-        const account = res.locals.account;
-        const date = Math.floor(Date.now() / 1000);
-        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
-        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-        return res.send({
-            'expireIn': expireAccessToken,
-            'role': account.role,
-            'x-access-token': accessToken,
-            'x-refresh-token': refreshToken
-        });
-    } catch (err) {
-        next(err);
-    }
+    const account = res.locals.account;
+    const date = Math.floor(Date.now() / 1000);
+    const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+    const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+    const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+    const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
+    const data = {
+        'expireIn': expireAccessToken,
+        'role': account.role,
+        'x-access-token': accessToken,
+        'x-refresh-token': refreshToken
+    };
+    return responsehandler(res, 200, 'Successfully', data, null)
 }
 
 exports.fortgotpassword = async function (req, res, next) {
     Account.findOne({ email: req.body.email })
         .then((account) => {
             if (!account) {
-                return res.status('200').send({
-                    message: 'Vui lòng kiểm tra mail để Please check your email to continue the process of forgetting your password! tục quá trình quên mật khẩu!'
-                });
+                return responsehandler(res, 200, 'Successfully', null, null);
             };
             const date = Math.floor(Date.now() / 1000);
             const expireAccessToken = date + 300;
@@ -101,13 +96,9 @@ exports.fortgotpassword = async function (req, res, next) {
                     }
                     transporter.sendMail(mainOptions, function (err, info) {
                         if (err) {
-                            return res.status(500).json({
-                                message: 'Internal Server Error'
-                            });
+                            next(err)
                         } else {
-                            return res.status(200).json({
-                                message: 'Please check your email to continue the process of forgetting your password!'
-                            });
+                            return responsehandler(res, 200, 'Successfully', null, null);
                         }
                     });
                 })
@@ -119,17 +110,13 @@ exports.fortgotpassword = async function (req, res, next) {
 exports.resetpassword = function (req, res, next) {
     const account = res.locals.account;
     if (!account) {
-        return res.status(400).send({
-            message: 'Bad request!'
-        });
+        return responsehandler(res, 200, 'Bad request', null, null);
     }
     account.password = req.body.password;
     account.resetPasswordToken = '';
     account.save()
         .then(() => {
-            return res.status(200).send({
-                message: 'Reset password success!'
-            });
+            return responsehandler(res, 200, 'Successfully', null, null);
         })
         .catch(err => next(err))
 }
@@ -139,59 +126,13 @@ exports.changepassword = function (req, res, next) {
     account.password = req.body.password;
     account.save()
         .then(() => {
-            return res.status(200).json({
-                message: 'Change password success!'
-            });
+            return responsehandler(res, 200, 'Successfully', null, null);
         })
         .catch(err => next(err));
 
 }
 
 exports.registeraccount = function (req, res, next) {
-    try {
-        let account = new Account();
-        let user = new User();
-        Account.find({ $or: [{ username: req.value.body.username }, { email: req.value.body.email }] },
-            function (err, docs) {
-                if (!err) {
-                    if (isEmpty(docs)) {
-                        account.username = req.value.body.username;
-                        account.password = req.value.body.password;
-                        account.email = req.value.body.email;
-                        account.user_id = user._id;
-                        account.phonenumber = req.value.body.phonenumber;
-                        account.save()
-                            .then(() => {
-                                user.firstname = req.value.body.firstname;
-                                user.lastname = req.value.body.lastname;
-                                user.birthday = req.value.body.birthday;
-                                user.gender = req.value.body.gender;
-                                user.save().then(() => {
-                                    return res.status(201).json({
-                                        message: 'Account created!'
-                                    })
-                                }).catch(err => {
-                                    account.deleteOne({ _id: account._id });
-                                    next(err);
-                                });
-
-                            })
-                            .catch(err => next(err));
-                    } else {
-                        return res.status(200).json({
-                            message: 'Username or email already exists!'
-                        });
-                    }
-                }
-            }
-        );
-
-    } catch (err) {
-        next(err);
-    }
-}
-
-exports.registermoderator = function (req, res, next) {
     try {
         let account = new Account();
         let user = new User();
@@ -203,7 +144,6 @@ exports.registermoderator = function (req, res, next) {
                         account.password = req.body.password;
                         account.email = req.body.email;
                         account.user_id = user._id;
-                        account.role = 'Moderator';
                         account.phonenumber = req.body.phonenumber;
                         account.save()
                             .then(() => {
@@ -212,19 +152,16 @@ exports.registermoderator = function (req, res, next) {
                                 user.birthday = req.body.birthday;
                                 user.gender = req.body.gender;
                                 user.save().then(() => {
-                                    return res.status(201).json({
-                                        message: 'Account created!'
-                                    })
+                                    return responsehandler(res, 201, 'Successfully', null, null);
                                 }).catch(err => {
                                     account.deleteOne({ _id: account._id });
                                     next(err);
-                                })
-                            }).catch(err => next(err));
+                                });
 
+                            })
+                            .catch(err => next(err));
                     } else {
-                        return res.res.status(500).json({
-                            message: 'Username or email already exists!'
-                        });
+                        return responsehandler(res, 200, 'Username or email already exists!', null, null);
                     }
                 }
             }
@@ -235,100 +172,92 @@ exports.registermoderator = function (req, res, next) {
     }
 }
 
-exports.getlistaccountactive = async function (req, res, next) {
-    try {
-        const account = await Account.find({ islock: 0 });
-        var temp = [];
-        account.forEach(function (item) {
-            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
-            temp.push(accNoField);
-        });
-        return res.send(temp);
-    } catch (err) {
-        next(err);
-    }
+exports.registermoderator = function (req, res, next) {
+    let account = new Account();
+    let user = new User();
+    Account.find({ $or: [{ username: req.body.username }, { email: req.body.email }] },
+        function (err, docs) {
+            if (!err) {
+                if (isEmpty(docs)) {
+                    account.username = req.body.username;
+                    account.password = req.body.password;
+                    account.email = req.body.email;
+                    account.user_id = user._id;
+                    account.role = 'Moderator';
+                    account.phonenumber = req.body.phonenumber;
+                    account.save()
+                        .then(() => {
+                            user.firstname = req.body.firstname;
+                            user.lastname = req.body.lastname;
+                            user.birthday = req.body.birthday;
+                            user.gender = req.body.gender;
+                            user.save().then(() => {
+                                return responsehandler(res, 201, 'Successfully', null, null);
+                            }).catch(err => {
+                                account.deleteOne({ _id: account._id });
+                                next(err);
+                            })
+                        }).catch(err => next(err));
+
+                } else {
+                    return responsehandler(res, 200, 'Username or email already exists!', null, null);
+                }
+            }
+        }
+    );
 }
 
-exports.getlistmoderatoractive = async function (req, res, next) {
-    try {
-        const account = await Account.find({ role: 'Moderator', islock: 0 });
-        var temp = [];
-        account.forEach(function (item) {
-            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
-            temp.push(accNoField);
-        });
-        return res.send(temp);
-    } catch (err) {
-        next(err);
-    }
+exports.getlistaccount = async function (req, res, next) {
+    const account = await Account.find({ islock: 0, role: { "$ne": 'Administrator' } }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt']);
+    account.forEach(function (item) {
+        item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
+    });
+    return responsehandler(res, 200, 'Successfully', account, null);
 }
 
-exports.getlistaccountlock = async function (req, res, next) {
-    try {
-        const account = await Account.find({ islock: 1 });
-        var temp = [];
-        account.forEach(function (item) {
-            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
-            temp.push(accNoField);
-        });
-        return res.send(temp);
-    } catch (err) {
-        next(err);
-    }
+exports.getlistmoderator = async function (req, res, next) {
+    const account = await Account.find({ role: 'Moderator', islock: 0 }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt']);
+    account.forEach(function (item) {
+        item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
+    });
+    return responsehandler(res, 200, 'Successfully', account, null);
 }
 
-exports.getlistmoderatorlock = async function (req, res, next) {
-    try {
-        const account = await Account.find({ role: 'Moderator', islock: 1 });
-        var temp = [];
-        account.forEach(function (item) {
-            item._doc.createdate = moment(item._doc.createdate).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, createdAt, updatedAt, ...accNoField } = item._doc;
-            temp.push(accNoField);
-        });
-        return res.send(temp);
-    } catch (err) {
-        next(err);
-    }
+exports.findAccount = async function (req, res, next) {
+    let username = req.params.username;
+    const accounts = await Account.find({ username: { $regex: '.*' + username + '.*' } }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt'])
+    accounts.forEach(function (item) {
+        item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
+    });
+    return responsehandler(res, 200, 'Successfully', accounts, null);
 }
 
 exports.lockaccount = function (req, res, next) {
-    try {
-        let user_id = req.body.id;
-        Account.findOne({ _id: user_id }, function (err, account) {
-            if (err)
-                next(err);
-            else {
-                account.islock = 1;
-                account.save();
-                return res.status(200).json({
-                    message: 'Account lock is successful'
-                })
-            }
-        });
-    } catch (err) {
-        next(err);
-    }
+    let user_id = req.body.id;
+    Account.findOne({ _id: user_id }, function (err, account) {
+        if (err)
+            next(err);
+        else {
+            account.islock = 1;
+            account.save();
+            account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
+            const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
+            return responsehandler(res, 200, 'Successfully', accNoField, null);
+        }
+    });
 }
 
 exports.unlockaccount = function (req, res, next) {
-    try {
-        let user_id = req.body.id;
-        Account.findOne({ _id: user_id }, function (err, account) {
-            if (err)
-                next(err);
-            else {
-                account.islock = 0;
-                account.save();
-                return res.status(200).json({
-                    message: 'Account unlock is successful'
-                })
-            }
-        });
-    } catch (err) {
-        next(err);
-    }
+    let user_id = req.body.id;
+    Account.findOne({ _id: user_id }, function (err, account) {
+        if (err)
+            next(err);
+        else {
+            account.islock = 0;
+            account.save();
+            account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
+            const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
+            return responsehandler(res, 200, 'Successfully', accNoField, null);
+        }
+    });
 }

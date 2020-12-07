@@ -3,6 +3,7 @@ const fs = require('fs');
 const User = require('../models/User');
 const mediaserver = require('mediaserver');
 const path = require("path");
+const { Error } = require('mongoose');
 
 exports.createTrack = async function (req, res, next) {
     const track = new Track(req.body);
@@ -27,9 +28,12 @@ exports.createTrack = async function (req, res, next) {
         fileMusic.mv('./musics/' + time + fileMusic.name);
         track.tracklink = 'musics/' + time + fileMusic.name;
     }
+    console.log('Track: ', track);
     await track.save()
         .then(async (track) => {
+            console.log(res.locals.account.user_id);
             const user = await User.findById(res.locals.account.user_id);
+            console.log(user);
             user.tracks.push(track._id);
             await user.save()
                 .then(() => {

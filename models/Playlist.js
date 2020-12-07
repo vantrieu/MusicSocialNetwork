@@ -1,10 +1,9 @@
 const mongoose = require('mongoose')
 
 const playlistSchema = mongoose.Schema({
-    track_ids: {
-        type: [String],
-        required: true,
-        default: []
+    tracks: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Track'
     },
     user_id: {
         type: String,

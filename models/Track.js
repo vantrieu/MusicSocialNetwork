@@ -27,8 +27,7 @@ const trackSchema = mongoose.Schema({
         default: 0
     },
     album_id: {
-        type: mongoose.SchemaTypes.ObjectId,
-        default: ''
+        type: mongoose.SchemaTypes.ObjectId
     },
     comments: [{
         type: mongoose.SchemaTypes.ObjectId,
