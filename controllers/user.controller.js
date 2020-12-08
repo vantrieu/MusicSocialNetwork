@@ -6,166 +6,148 @@ const nodemailer = require('nodemailer');
 const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const { listIndexes } = require('../models/Follow');
+const responsehandler = require('../helpers/respone-handler');
+const removeVietnameseTones = require('../helpers/convertVie-handler');
 const Album = require('../models/Album');
 const Track = require('../models/Track');
 
 exports.me = function (req, res, next) {
-    try {
-        const account = res.locals.account.user_id;
-        User.findById({ _id: account }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender'], function (err, user) {
-            if (err)
-                next(err);
-            else {
-                user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
-                //const { __v, createdAt, updatedAt, ...userNoField } = user._doc;
-                return res.status(200).json({
-                    'user': user._doc
-                });
-            }
-        });
-    } catch (err) {
-        next(err);
-    }
+    const account = res.locals.account.user_id;
+    User.findById({ _id: account }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender'], function (err, user) {
+        if (err)
+            next(err);
+        else {
+            user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
+            user.avatar = process.env.ENVIROMENT + user.avatar;
+            return responsehandler(res, 200, 'Successfully', user, null);
+        }
+    });
+}
+
+exports.viewProfile = function (req, res, next) {
+    const name = removeVietnameseTones(req.body.name);
+    User.find({ namenosign: { $regex: '.*' + name + '.*' } }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender'], function (err, users) {
+        if (err)
+            next(err);
+        else {
+            users.forEach(function (item) {
+                item._doc.birthday = moment(item._doc.birthday).format('DD/MM/YYYY');
+                if (item.avatar !== '')
+                    item.avatar = process.env.ENVIROMENT + item.avatar;
+            });
+            return responsehandler(res, 200, 'Successfully', users, null);
+        }
+    });
 }
 
 exports.uploadimg = async function (req, res, next) {
-    try {
-        if (!req.files) {
-            return res.send({
-                status: false,
-                message: 'No file uploaded'
-            });
-        } else {
-            try {
-                let avatar = req.files.avatar;
-                const user = await User.findById({ _id: res.locals.account.user_id });
-                if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
-                    let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
-                    avatar.mv('./public/images/' + address);
-                    try {
-                        fs.unlinkSync('./public' + user.avatar);
-                    } catch (err) {
-                        console.error(err)
-                    }
-                    user.avatar = '/images/' + address;
-                    user.save();
-                    return res.res.status(201).json({
-                        message: 'File uploded successfully'
-                    });
-                } else {
-                    return res.res.status(400).json({
-                        message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
-                    });
+    if (!req.files)
+        return responsehandler(res, 400, 'Bad request', null, null);
+    else {
+        try {
+            let avatar = req.files.avatar;
+            const user = await User.findById({ _id: res.locals.account.user_id });
+            if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
+                let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
+                avatar.mv('./public/images/' + address);
+                try {
+                    fs.unlinkSync('./public' + user.avatar);
+                } catch (err) {
+                    console.error(err)
                 }
-            } catch (err) {
-                next(err);
+                user.avatar = '/images/' + address;
+                user.save();
+                return responsehandler(res, 201, 'Successfully', null, null);
+            } else {
+                return responsehandler(res, 400, 'Only accept jpeg or png formats', null, null);
             }
+        } catch (err) {
+            next(err);
         }
-    } catch (err) {
-        return res.status(500).send(err);
-    }
-
-}
-
-exports.changeprofile = function (req, res, next) {
-    try {
-        const account = res.locals.account.user_id;
-        User.findById({ _id: account }, function (req, err, user) {
-            if (err)
-                next(err);
-            else {
-                if (!isNaN(req.body.firstname))
-                    user._doc.firstname = req.body.firstname;
-                if (!isNaN(req.body.lastname))
-                    user._doc.lastname = req.body.lastname;
-                if (!isNaN(req.body.birthday))
-                    user._doc.birthday = req.body.birthday;
-                if (!isNaN(req.body.gender))
-                    user._doc.gender = req.body.gender;
-                return res.status(200).json({
-                    message: 'Change profile success!'
-                });
-            }
-        });
-    } catch (err) {
-        next(err);
     }
 }
 
-exports.createfollow = function (req, res, next) {
-    try {
-        let follow_id = res.locals.account.user_id;
-        let user_id = req.body.id;
-        let follow = new Follow();
-        follow.follow_id = follow_id;
-        follow.user_id = user_id;
-        follow.save();
-        return res.status(201).json({
-            message: 'Follow user success!'
-        });
-    } catch {
-        next(err)
-    }
+exports.changeprofile = async function (req, res, next) {
+    const account = res.locals.account.user_id;
+    const user = await User.findById({ _id: account })
+    if (req.body.firstname !== undefined)
+        user.firstname = req.body.firstname;
+    if (req.body.lastname !== undefined)
+        user.lastname = req.body.lastname;
+    if (req.body.birthday !== undefined)
+        user.birthday = req.body.birthday;
+    if (req.body.gender !== undefined)
+        user.gender = req.body.gender;
+    let temp = user.lastname + " " + user.firstname;
+    user.namenosign = removeVietnameseTones(temp);
+    user.updatedAt = Date.now();
+    await user.save();
+    return responsehandler(res, 201, 'Successfully', null, null);
+}
+
+exports.createfollow = async function (req, res, next) {
+    let follow_id = res.locals.account.user_id;
+    let user_id = req.body.id;
+    let follow = new Follow();
+    follow.follow_id = follow_id;
+    follow.user_id = user_id;
+    await follow.save();
+    return responsehandler(res, 201, 'Successfully', null, null);
 }
 
 exports.getfollowme = async function (req, res, next) {
-    try {
-        var lstfollow_id = [];
-        let follow = await Follow.find({ user_id: res.locals.account.user_id });
-        follow.forEach(function (item) {
-            lstfollow_id.push(item.follow_id)
-        });
-        let user = await User.find({}).where('_id').in(lstfollow_id);
-        var lstuserfollow = [];
-        user.forEach(function (item) {
-            const { __v, gender, birthday, createdAt, updatedAt, ...userNoField } = item._doc;
-            lstuserfollow.push(userNoField);
-        });
-        return res.status(200).json({
-            users: lstuserfollow
-        });
-    } catch (err) {
-        next(err);
-    }
+    var lstfollow_id = [];
+    let follows = await Follow.find({ user_id: res.locals.account.user_id }, ['follow_id']);
+    follows.forEach(function (item) {
+        lstfollow_id.push(item.follow_id)
+    });
+    let users = await User.find({}, ['avatar', 'firstname', 'lastname', 'gender']).where('_id').in(lstfollow_id);
+    users.forEach(function (item) {
+        item._doc.avatar = process.env.ENVIROMENT + item._doc.avatar;
+    });
+    return responsehandler(res, 200, 'Successfully', users, null);
 }
 
 exports.getfollowbyme = async function (req, res, next) {
-    try {
-        var lstfollow_id = [];
-        let follow = await Follow.find({ follow_id: res.locals.account.user_id });
-        follow.forEach(function (item) {
-            lstfollow_id.push(item.user_id)
-        });
-        let user = await User.find({}).where('_id').in(lstfollow_id);
-        var lstuserfollow = [];
-        user.forEach(function (item) {
-            const { __v, gender, birthday, createdAt, updatedAt, ...userNoField } = item._doc;
-            lstuserfollow.push(userNoField);
-        });
-        return res.status(200).json({
-            users: lstuserfollow
-        });
-    } catch (err) {
-        next(err);
-    }
+    var lstfollow_id = [];
+    let follows = await Follow.find({ follow_id: res.locals.account.user_id }, ['user_id']);
+    follows.forEach(function (item) {
+        lstfollow_id.push(item.user_id)
+    });
+    console.log(lstfollow_id)
+    let users = await User.find({}, ['avatar', 'firstname', 'lastname', 'gender']).where('_id').in(lstfollow_id);
+    users.forEach(function (item) {
+        item._doc.avatar = process.env.ENVIROMENT + item._doc.avatar;
+    });
+    return responsehandler(res, 200, 'Successfully', users, null);
 }
 
 exports.unfollow = function (req, res, next) {
-    try {
-        Follow.findOneAndDelete({ follow_id: res.locals.account.user_id, user_id: req.body.id }, function (err) {
-            if (err)
-                next(err);
-            else {
-                return res.status(201).json({
-                    message: 'UnFollow user success!'
-                });
-            }
-        })
-    } catch {
-        next(err)
-    }
+    Follow.findOneAndDelete({ follow_id: res.locals.account.user_id, user_id: req.body.id }, function (err) {
+        if (err)
+            next(err);
+        else {
+            return responsehandler(res, 200, 'Successfully', null, null);
+        }
+    });
 }
+
+exports.mymusic = async function (req, res, next) {
+    const results = (await User.findById(res.locals.account.user_id).populate('tracks')).tracks;
+    results.forEach(function (item) {
+        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+        item._doc.comments = undefined;
+        item._doc.playlists = undefined;
+        item._doc.user_id = undefined;
+        item._doc.createdAt = undefined;
+        item._doc.updatedAt = undefined;
+        item._doc.__v = undefined;
+    });
+    return responsehandler(res, 200, 'Successfully', results, null);
+}
+
+
+
 
 exports.uploadmp3 = function (req, res, next) {
     try {
@@ -190,13 +172,6 @@ exports.uploadmp3 = function (req, res, next) {
     } catch (err) {
         return res.status(500).send(err);
     }
-}
-
-exports.mymusic = async function (req, res, next) {
-    const result = (await User.findById(res.locals.account.user_id, ['tracks']).populate('tracks')).tracks;
-    return res.status(200).json({
-        'tracks': result
-    })
 }
 
 exports.createAlbum = async function (req, res, next) {

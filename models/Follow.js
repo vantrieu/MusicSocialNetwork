@@ -2,12 +2,12 @@ const mongoose = require('mongoose')
 
 const followSchema = mongoose.Schema({
     follow_id: {
-        type: String,
+        type: mongoose.SchemaTypes.ObjectId,
         required: true,
         trim: true
     },
     user_id: {
-        type: String,
+        type: mongoose.SchemaTypes.ObjectId,
         required: true,
         trim: true
     }

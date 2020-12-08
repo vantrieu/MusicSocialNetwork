@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const moment = require('moment');
 const responsehandler = require('../helpers/respone-handler');
+const removeVietnameseTones = require('../helpers/convertVie-handler');
 
 function isEmpty(obj) {
     for (var key in obj) {
@@ -149,6 +150,9 @@ exports.registeraccount = function (req, res, next) {
                             .then(() => {
                                 user.firstname = req.body.firstname;
                                 user.lastname = req.body.lastname;
+                                let temp = user.lastname + " " + user.firstname;
+                                user.namenosign = removeVietnameseTones(temp);
+                                user.avatar = "/images/noimage.jpg"
                                 user.birthday = req.body.birthday;
                                 user.gender = req.body.gender;
                                 user.save().then(() => {
@@ -189,6 +193,9 @@ exports.registermoderator = function (req, res, next) {
                         .then(() => {
                             user.firstname = req.body.firstname;
                             user.lastname = req.body.lastname;
+                            let temp = user.lastname + " " + user.firstname;
+                            user.namenosign = removeVietnameseTones(temp);
+                            user.avatar = "/images/noimage.jpg"
                             user.birthday = req.body.birthday;
                             user.gender = req.body.gender;
                             user.save().then(() => {

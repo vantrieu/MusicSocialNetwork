@@ -7,6 +7,7 @@ const Account = require('./models/Account');
 const User = require('./models/User');
 const fileUpload = require('express-fileupload');
 const responsehandler = require('./helpers/respone-handler');
+const removeVietnameseTones = require('./helpers/convertVie-handler');
 require('dotenv/config');
 
 //Middlewares
@@ -55,8 +56,11 @@ mongoose.connection.once('open', function () {
             account.role = 'Administrator';
             account.phonenumber = '03867537750';
             account.save();
-            user.firstname = 'Super';
-            user.lastname = 'Admin';
+            user.firstname = 'Admin';
+            user.lastname = 'Super';
+            let temp = user.lastname + " " + user.firstname;
+            user.namenosign = removeVietnameseTones(temp);
+            user.avatar = "/images/noimage.jpg"
             user.birthday = Date.now();
             user.gender = 'Không muốn tiết lộ';
             user.save();

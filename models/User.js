@@ -11,6 +11,9 @@ const userSchema = mongoose.Schema({
         required: true,
         trim: true
     },
+    namenosign: {
+        type: String
+    },
     birthday: {
         type: Date,
         required: true,
