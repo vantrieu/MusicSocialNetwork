@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const helmet = require('helmet');
+const rateLimit = require("express-rate-limit");
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -10,9 +12,26 @@ const responsehandler = require('./helpers/respone-handler');
 const removeVietnameseTones = require('./helpers/convertVie-handler');
 require('dotenv/config');
 
+// CORS config
+var corsOptions = {
+    origin: '*',
+    optionsSuccessStatus: 200,
+    methods: "GET, POST"
+}
+app.use(cors(corsOptions));
+
+// Against DDOS or brute-force
+const limiter = rateLimit({
+    // 1 minutes
+    windowMs: 1 * 60 * 1000,
+    // limit each IP to 100 requests per windowMs
+    max: 60
+});
+app.use(limiter);
+
 //Middlewares
-app.use(cors());
-app.use(bodyParser.json());
+app.use(helmet());
+app.use(bodyParser.json({ limit: '10240kb'}));
 app.use(require('morgan')('combined'))
 app.use(fileUpload({ createParentPath: true }));
 app.use(express.static(__dirname + '/public'));
