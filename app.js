@@ -43,11 +43,13 @@ app.get('/', function (req, res) {
 const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
 const trackRoute = require('./routes/track');
+const albumRoute = require('./routes/album');
 
 //Routes
 app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
 app.use('/tracks', trackRoute);
+app.use('/albums', albumRoute);
 
 //Connect mongodb
 mongoose.connect(

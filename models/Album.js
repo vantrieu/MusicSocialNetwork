@@ -10,6 +10,9 @@ const albumSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    namenosign: {
+        type: String
+    },
     background: {
         type: String,
         required: true
@@ -20,6 +23,10 @@ const albumSchema = mongoose.Schema({
     }],
     description: {
         type: String
+    },
+    total: {
+        type: Number,
+        default: 0
     }
 });
 
