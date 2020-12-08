@@ -18,6 +18,10 @@ const trackSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    namenosign: {
+        type: String,
+        required: true
+    },
     description: {
         type: String
     },

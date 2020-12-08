@@ -4,9 +4,12 @@ const User = require('../models/User');
 const mediaserver = require('mediaserver');
 const path = require("path");
 const { Error } = require('mongoose');
+const responsehandler = require('../helpers/respone-handler');
+const removeVietnameseTones = require('../helpers/convertVie-handler');
 
 exports.createTrack = async function (req, res, next) {
     const track = new Track(req.body);
+    track.namenosign = removeVietnameseTones(track.trackname);
     track.user_id = res.locals.account.user_id;
     let background = req.files.background;
     if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
@@ -14,21 +17,16 @@ exports.createTrack = async function (req, res, next) {
         background.mv('./public/images/' + address);
         track.background = process.env.ENVIROMENT + '/images/' + address;
     } else {
-        return res.res.status(400).json({
-            message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
-        });
+        return responsehandler(res, 400, 'Bad request', null, null);
     }
     let fileMusic = req.files.music;
     if (fileMusic.mimetype != 'audio/mpeg') {
-        return res.status(400).send({
-            message: 'Chỉ chấp nhận tập tin định dạng mp3!'
-        });
+        return responsehandler(res, 400, 'Bad request', null, null);
     } else {
         let time = Math.floor(Date.now() / 1000).toString();
         fileMusic.mv('./musics/' + time + fileMusic.name);
         track.tracklink = 'musics/' + time + fileMusic.name;
     }
-    console.log('Track: ', track);
     await track.save()
         .then(async (track) => {
             console.log(res.locals.account.user_id);
@@ -37,9 +35,7 @@ exports.createTrack = async function (req, res, next) {
             user.tracks.push(track._id);
             await user.save()
                 .then(() => {
-                    return res.status(201).json({
-                        track
-                    });
+                    return responsehandler(res, 201, 'Successfully', null, null);
                 })
         })
         .catch(() => {
@@ -58,10 +54,21 @@ exports.playmusic = async function (req, res, next) {
     mediaserver.pipe(req, res, link);
 }
 
-exports.listmusic = async function (req, res, next) {
-    const tracks = await Track.find({}, 
-        ['total', 'album_id', 'playlists', '_id', 'trackname', 'description', 'background']);
-    return res.status(200).json({
-        tracks
+exports.topmusic = async function (req, res, next) {
+    const tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background'])
+        .sort({ total: -1 })
+        .limit(100);
+    tracks.forEach(function (item) {
+        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
     })
+    return responsehandler(res, 200, 'Successfully', tracks, null)
+}
+
+exports.findbyname = async function (req, res, next) {
+    let keyword = removeVietnameseTones(req.body.trackname);
+    const tracks = await Track.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
+    tracks.forEach(function (item) {
+        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+    })
+    return responsehandler(res, 200, 'Successfully', tracks, null);
 }
