@@ -47,3 +47,24 @@ exports.detail = async function (req, res, next) {
     album.tracks = tracks;
     return responsehandler(res, 200, 'Successfully', album, null);
 }
+
+exports.topalbum = async function (req, res, next) {
+    let albums = await Album.find({}, ['_id', 'total', 'albumname', 'description', 'background'])
+        .sort({ total: -1 }).limit(15);
+    return responsehandler(res, 200, 'Successfully', albums, null);
+}
+
+exports.movetracktoalbum = async function (req, res, next) {
+    let track_id = req.body.track_id;
+    let album_id = req.body.album_id;
+    let album = await Album.findById(album_id);
+    album.tracks.pull(track_id);
+    await album.save();
+    return responsehandler(res, 200, 'Successfully', null, null);
+}
+
+exports.find = async function (req, res, next) {
+    let keyword = removeVietnameseTones(req.body.trackname);
+    let albums = await Album.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'albumname', 'description', 'background'])
+    return responsehandler(res, 200, 'Successfully', albums, null);
+}

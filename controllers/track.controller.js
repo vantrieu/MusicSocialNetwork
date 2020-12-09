@@ -31,7 +31,6 @@ exports.createTrack = async function (req, res, next) {
         .then(async (track) => {
             console.log(res.locals.account.user_id);
             const user = await User.findById(res.locals.account.user_id);
-            console.log(user);
             user.tracks.push(track._id);
             await user.save()
                 .then(() => {
