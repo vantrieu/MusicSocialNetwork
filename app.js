@@ -44,12 +44,14 @@ const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
 const trackRoute = require('./routes/track');
 const albumRoute = require('./routes/album');
+const playlistRoute = require('./routes/playlist');
 
 //Routes
 app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
 app.use('/tracks', trackRoute);
 app.use('/albums', albumRoute);
+app.use('/playlists', playlistRoute);
 
 //Connect mongodb
 mongoose.connect(

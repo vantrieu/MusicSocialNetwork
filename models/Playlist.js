@@ -1,10 +1,10 @@
 const mongoose = require('mongoose')
 
 const playlistSchema = mongoose.Schema({
-    tracks: {
+    tracks: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Track'
-    },
+    }],
     user_id: {
         type: String,
         required: true
@@ -13,12 +13,19 @@ const playlistSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    namenosign: {
+        type: String
+    },
     background: {
         type: String,
         required: true
     },
     description: {
         type: String
+    },
+    total: {
+        type: Number,
+        default: 0
     }
 });
 
