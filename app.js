@@ -45,6 +45,7 @@ const accountRoute = require('./routes/account');
 const trackRoute = require('./routes/track');
 const albumRoute = require('./routes/album');
 const playlistRoute = require('./routes/playlist');
+const commentRoute = require('./routes/comment');
 
 //Routes
 app.use('/accounts', accountRoute);
@@ -52,6 +53,7 @@ app.use('/users', userRoute);
 app.use('/tracks', trackRoute);
 app.use('/albums', albumRoute);
 app.use('/playlists', playlistRoute);
+app.use('/comments', commentRoute);
 
 //Connect mongodb
 mongoose.connect(
