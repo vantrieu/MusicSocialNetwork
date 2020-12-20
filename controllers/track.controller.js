@@ -6,6 +6,7 @@ const path = require("path");
 const { Error } = require('mongoose');
 const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
+const History = require('../models/History');
 
 exports.createTrack = async function (req, res, next) {
     const track = new Track(req.body);
@@ -45,12 +46,22 @@ exports.createTrack = async function (req, res, next) {
 }
 
 exports.playmusic = async function (req, res, next) {
-    const id = req.value.params.trackID;
+    const id = req.params.trackID;
     const track = await Track.findById(id);
-    var link = path.join(track.tracklink);
-    track.total = track.total + 1;
-    await track.save();
-    mediaserver.pipe(req, res, link);
+    const user_id = req.params.userID;
+    var user = await User.findById({ _id: user_id });
+    if (user !== null && track !== null) {
+        var link = path.join(track.tracklink);
+        track.total = track.total + 1;
+        await track.save();
+        var history = new History();
+        history.track = track.trackname;
+        history.user = user_id;
+        history.content = 'Bạn đã nghe bài hát ';
+        await history.save();
+        return mediaserver.pipe(req, res, link);
+    }
+    return responsehandler(res, 200, 'Not found', null, null);
 }
 
 exports.topmusic = async function (req, res, next) {

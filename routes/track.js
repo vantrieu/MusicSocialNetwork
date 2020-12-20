@@ -5,7 +5,7 @@ const {validateParam, schemas} = require('../helpers/validate-handler');
 const authUser = require("../middlewares/authUser");
 
 router.post('/create-track', AuthUser, TrackController.createTrack);
-router.get('/play/:trackID', validateParam(schemas.idSchema, 'trackID'), TrackController.playmusic);
+router.get('/play/:trackID/:userID', TrackController.playmusic);
 router.get('/top-music', AuthUser, TrackController.topmusic);
 router.get('/find', authUser, TrackController.findbyname);
 

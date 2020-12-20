@@ -1,11 +1,16 @@
 const mongoose = require('mongoose')
 
 const historySchema = mongoose.Schema({
-    track_id: {
+    track: {
         type: String,
         required: true
     },
-    user_id: {
+    user: {
+        type: mongoose.SchemaTypes.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    content: {
         type: String,
         required: true
     }
