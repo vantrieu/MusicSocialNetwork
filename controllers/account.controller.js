@@ -44,8 +44,8 @@ exports.login = async function (req, res, next) {
     const data = {
         'expireIn': expireAccessToken,
         'role': account.role,
-        'x-access-token': accessToken,
-        'x-refresh-token': refreshToken
+        'accessToken': accessToken,
+        'refreshToken': refreshToken
     };
     return responsehandler(res, 200, message, data, null)
 }
@@ -60,8 +60,8 @@ exports.refreshtoken = function (req, res, next) {
     const data = {
         'expireIn': expireAccessToken,
         'role': account.role,
-        'x-access-token': accessToken,
-        'x-refresh-token': refreshToken
+        'accessToken': accessToken,
+        'refreshToken': refreshToken
     };
     return responsehandler(res, 200, 'Successfully', data, null)
 }

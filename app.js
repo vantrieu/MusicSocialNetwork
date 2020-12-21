@@ -63,8 +63,7 @@ mongoose.connect(
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
-}
-);
+});
 
 mongoose.connection.on('error', console.error.bind(console, 'Database connection error:'));
 mongoose.connection.once('open', function () {
