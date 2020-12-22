@@ -1,9 +1,6 @@
-const responeHandler = function (res, status, message, items, meta) {
+const responeHandler = function (res, status, message, items) {
     return res.status(status).json({
-        'data': {
-            'items': items,
-            'meta': meta
-        },
+        'data': items,
         'message': message
     });
 }

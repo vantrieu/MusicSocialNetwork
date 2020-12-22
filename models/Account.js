@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const mongoosePaginate = require('mongoose-paginate');
 
 const accountSchema = mongoose.Schema({
     user_id: {
@@ -64,5 +65,6 @@ accountSchema.methods.generateAuthToken = async function () {
     return token
 }
 
+accountSchema.plugin(mongoosePaginate);
 accountSchema.set('timestamps', true);
 module.exports = mongoose.model('Account', accountSchema)

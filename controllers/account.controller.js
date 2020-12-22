@@ -15,25 +15,25 @@ function isEmpty(obj) {
     return true;
 }
 
-exports.login = async function (req, res, next) {
+exports.login = async function (req, res) {
     const pass = req.body.password;
     const username = req.body.username;
     const account = await Account.findOne({ username });
     // return result if the username is not found in the database
     if (account == null) {
-        const message = 'Login failed! Username or password is incorrect'
-        return responsehandler(res, 200, message, null, null)
+        const message = 'Đăng nhập thất bại! Tài khoản không tồn tại!'
+        return responsehandler(res, 200, message, {})
     }
     const isPasswordMatch = await bcrypt.compare(pass, account.password)
     // return result if password does not match
     if (!isPasswordMatch) {
-        const message = 'Login failed! Username or password is incorrect'
-        return responsehandler(res, 200, message, null, null)
+        const message = 'Đăng nhập thất bại! Tên đăng nhập hoặc mật khẩu không đúng!'
+        return responsehandler(res, 200, message, {})
     }
     // return result if the account is locked
     if (account.islock === 1) {
-        const mesage = 'Login failed! The account is locked'
-        return responsehandler(res, 200, message, null, null)
+        const message = 'Đăng nhập thất bại! Tài khoản đang bị khóa!'
+        return responsehandler(res, 200, message, {})
     }
     const date = Math.floor(Date.now() / 1000);
     const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
@@ -47,7 +47,7 @@ exports.login = async function (req, res, next) {
         'accessToken': accessToken,
         'refreshToken': refreshToken
     };
-    return responsehandler(res, 200, message, data, null)
+    return responsehandler(res, 200, message, data)
 }
 
 exports.refreshtoken = function (req, res, next) {
@@ -63,14 +63,14 @@ exports.refreshtoken = function (req, res, next) {
         'accessToken': accessToken,
         'refreshToken': refreshToken
     };
-    return responsehandler(res, 200, 'Successfully', data, null)
+    return responsehandler(res, 200, 'Successfully', data)
 }
 
 exports.fortgotpassword = async function (req, res, next) {
     Account.findOne({ email: req.body.email })
         .then((account) => {
             if (!account) {
-                return responsehandler(res, 200, 'Successfully', null, null);
+                return responsehandler(res, 200, 'Successfully', {});
             };
             const date = Math.floor(Date.now() / 1000);
             const expireAccessToken = date + 300;
@@ -91,7 +91,7 @@ exports.fortgotpassword = async function (req, res, next) {
                         subject: 'Reset Password',
                         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
                             'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-                            'http://localhost:3000/accounts/reset/' + account.resetPasswordToken + '\n\n' +
+                            `${process.env.ENVIROMENT}/accounts/reset/` + account.resetPasswordToken + '\n\n' +
                             'Note: The link is valid for 5 minutes. \n' +
                             'If you did not request this, please ignore this email and your password will remain unchanged.\n'
                     }
@@ -99,7 +99,7 @@ exports.fortgotpassword = async function (req, res, next) {
                         if (err) {
                             next(err)
                         } else {
-                            return responsehandler(res, 200, 'Successfully', null, null);
+                            return responsehandler(res, 200, 'Successfully', {});
                         }
                     });
                 })
@@ -111,13 +111,13 @@ exports.fortgotpassword = async function (req, res, next) {
 exports.resetpassword = function (req, res, next) {
     const account = res.locals.account;
     if (!account) {
-        return responsehandler(res, 200, 'Bad request', null, null);
+        return responsehandler(res, 200, 'Tài khoản không tồn tại!', {});
     }
     account.password = req.body.password;
     account.resetPasswordToken = '';
     account.save()
         .then(() => {
-            return responsehandler(res, 200, 'Successfully', null, null);
+            return responsehandler(res, 200, 'Successfully', {});
         })
         .catch(err => next(err))
 }
@@ -127,10 +127,9 @@ exports.changepassword = function (req, res, next) {
     account.password = req.body.password;
     account.save()
         .then(() => {
-            return responsehandler(res, 200, 'Successfully', null, null);
+            return responsehandler(res, 200, 'Successfully', {});
         })
         .catch(err => next(err));
-
 }
 
 exports.registeraccount = function (req, res, next) {
@@ -156,7 +155,7 @@ exports.registeraccount = function (req, res, next) {
                                 user.birthday = req.body.birthday;
                                 user.gender = req.body.gender;
                                 user.save().then(() => {
-                                    return responsehandler(res, 201, 'Successfully', null, null);
+                                    return responsehandler(res, 201, 'Successfully', {});
                                 }).catch(err => {
                                     account.deleteOne({ _id: account._id });
                                     next(err);
@@ -165,7 +164,7 @@ exports.registeraccount = function (req, res, next) {
                             })
                             .catch(err => next(err));
                     } else {
-                        return responsehandler(res, 200, 'Username or email already exists!', null, null);
+                        return responsehandler(res, 200, 'Tên đăng nhập hoặc email đã tồn tại!', {});
                     }
                 }
             }
@@ -199,7 +198,7 @@ exports.registermoderator = function (req, res, next) {
                             user.birthday = req.body.birthday;
                             user.gender = req.body.gender;
                             user.save().then(() => {
-                                return responsehandler(res, 201, 'Successfully', null, null);
+                                return responsehandler(res, 201, 'Successfully', {});
                             }).catch(err => {
                                 account.deleteOne({ _id: account._id });
                                 next(err);
@@ -207,36 +206,59 @@ exports.registermoderator = function (req, res, next) {
                         }).catch(err => next(err));
 
                 } else {
-                    return responsehandler(res, 200, 'Username or email already exists!', null, null);
+                    return responsehandler(res, 200, 'Tên đăng nhập hoặc email đã tồn tại!', {});
                 }
             }
         }
     );
 }
 
-exports.getlistaccount = async function (req, res, next) {
-    const account = await Account.find({ islock: 0, role: { "$ne": 'Administrator' } }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt']);
-    account.forEach(function (item) {
+exports.getlistaccount = async function (req, res) {
+    var query = {
+        role: { "$ne": 'Administrator' }
+    };
+    var options = {
+        select: 'islock _id username email phonenumber createdAt',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    const account = await Account.paginate(query, options);
+    account.docs.forEach(function (item) {
         item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
     });
-    return responsehandler(res, 200, 'Successfully', account, null);
+    return responsehandler(res, 200, 'Successfully', account);
 }
 
-exports.getlistmoderator = async function (req, res, next) {
-    const account = await Account.find({ role: 'Moderator', islock: 0 }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt']);
-    account.forEach(function (item) {
+exports.getlistmoderator = async function (req, res) {
+    var query = {
+        role: 'Moderator'
+    };
+    var options = {
+        select: 'islock _id username email phonenumber createdAt',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    const account = await Account.paginate(query, options);
+    account.docs.forEach(function (item) {
         item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
     });
-    return responsehandler(res, 200, 'Successfully', account, null);
+    return responsehandler(res, 200, 'Successfully', account);
 }
 
-exports.findAccount = async function (req, res, next) {
-    let username = req.params.username;
-    const accounts = await Account.find({ username: { $regex: '.*' + username + '.*' } }, ['islock', '_id', 'username', 'email', 'phonenumber', 'createdAt'])
-    accounts.forEach(function (item) {
+exports.findAccount = async function (req, res) {
+    var query = {
+        username: { $regex: '.*' + req.params.username + '.*' }
+    };
+    var options = {
+        select: 'islock _id username email phonenumber createdAt',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    const accounts = await Account.paginate(query, options);
+    accounts.docs.forEach(function (item) {
         item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
     });
-    return responsehandler(res, 200, 'Successfully', accounts, null);
+    return responsehandler(res, 200, 'Successfully', accounts);
 }
 
 exports.lockaccount = function (req, res, next) {
@@ -249,7 +271,7 @@ exports.lockaccount = function (req, res, next) {
             account.save();
             account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
             const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
-            return responsehandler(res, 200, 'Successfully', accNoField, null);
+            return responsehandler(res, 200, 'Successfully', accNoField);
         }
     });
 }
@@ -264,7 +286,7 @@ exports.unlockaccount = function (req, res, next) {
             account.save();
             account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
             const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
-            return responsehandler(res, 200, 'Successfully', accNoField, null);
+            return responsehandler(res, 200, 'Successfully', accNoField);
         }
     });
 }
