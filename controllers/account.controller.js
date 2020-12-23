@@ -155,7 +155,9 @@ exports.registeraccount = function (req, res, next) {
                                 user.birthday = req.body.birthday;
                                 user.gender = req.body.gender;
                                 user.save().then(() => {
-                                    return responsehandler(res, 201, 'Successfully', {});
+                                    account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
+                                    const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
+                                    return responsehandler(res, 201, 'Successfully', { ...accNoField });
                                 }).catch(err => {
                                     account.deleteOne({ _id: account._id });
                                     next(err);
@@ -198,7 +200,9 @@ exports.registermoderator = function (req, res, next) {
                             user.birthday = req.body.birthday;
                             user.gender = req.body.gender;
                             user.save().then(() => {
-                                return responsehandler(res, 201, 'Successfully', {});
+                                account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
+                                const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
+                                return responsehandler(res, 201, 'Successfully', { ...accNoField });
                             }).catch(err => {
                                 account.deleteOne({ _id: account._id });
                                 next(err);
@@ -215,7 +219,8 @@ exports.registermoderator = function (req, res, next) {
 
 exports.getlistaccount = async function (req, res) {
     var query = {
-        role: { "$ne": 'Administrator' }
+        //role: { "$ne": 'Administrator' }
+        role: 'User'
     };
     var options = {
         select: 'islock _id username email phonenumber createdAt',
