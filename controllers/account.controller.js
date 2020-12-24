@@ -327,10 +327,17 @@ exports.unlockaccount = function (req, res, next) {
 }
 
 exports.loginFacebook = async function (req, res) {
-    var { id, firstname, lastname, middlename, gender, birthday, picture } = req.body;
+    var { id, firstname, lastname, middlename, gender, birthday, picture, email } = req.body;
     var user = new User();
     var flag = await User.findOne({ fbid: id });
     if (isEmpty(flag)) {
+        var account = new Account();
+        account.user_id = user._id;
+        account.email = email;
+        account.username = removeVietnameseTones(lastname + middlename + firstname);
+        account.password = Math.random().toString(36).substring(4);
+        account.role = 'User';
+        await account.save();
         user.fbid = id;
         user.firstname = middlename + ' ' + firstname;
         user.lastname = lastname;
@@ -345,19 +352,32 @@ exports.loginFacebook = async function (req, res) {
         await download_image(picture, './public' + address);
         user.avatar = address;
         await user.save();
-        const accessToken = jwt.sign({ _id: id, auth: 'facebook', role: 'User' }, process.env.JWT_KEY);
+        const date = Math.floor(Date.now() / 1000);
+        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
         const message = 'Successfully';
         const data = {
-            'role': 'User',
-            'accessToken': accessToken
+            'expireIn': expireAccessToken,
+            'role': account.role,
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
         };
         return responsehandler(res, 200, message, data, null);
     } else {
-        const accessToken = jwt.sign({ _id: id, auth: 'facebook', role: 'User' }, process.env.JWT_KEY);
+        var account = await Account.findOne({user_id: flag._id});
+        const date = Math.floor(Date.now() / 1000);
+        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
         const message = 'Successfully';
         const data = {
-            'role': 'User',
-            'accessToken': accessToken
+            'expireIn': expireAccessToken,
+            'role': account.role,
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
         };
         return responsehandler(res, 200, message, data, null);
     }

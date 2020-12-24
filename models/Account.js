@@ -22,7 +22,6 @@ const accountSchema = mongoose.Schema({
     },
     phonenumber: {
         type: String,
-        required: true,
         minLength: 10,
         maxLength: 11
     },
