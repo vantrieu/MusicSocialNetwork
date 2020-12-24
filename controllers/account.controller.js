@@ -8,6 +8,8 @@ const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const { validationResult } = require('express-validator');
 const buildMetaHandler = require('../helpers/build-meta-handler');
+const axios = require('axios');
+const fs = require('fs');
 
 function isEmpty(obj) {
     for (var key in obj) {
@@ -15,6 +17,21 @@ function isEmpty(obj) {
             return false;
     }
     return true;
+}
+
+function download_image(url, image_path) {
+    axios({
+        url,
+        responseType: 'stream',
+    }).then(
+        response =>
+            new Promise((resolve, reject) => {
+                response.data
+                    .pipe(fs.createWriteStream(image_path))
+                    .on('finish', () => resolve())
+                    .on('error', e => reject(e));
+            }),
+    );
 }
 
 exports.login = async function (req, res) {
@@ -307,4 +324,41 @@ exports.unlockaccount = function (req, res, next) {
             return responsehandler(res, 200, 'Successfully', accNoField, null);
         }
     });
+}
+
+exports.loginFacebook = async function (req, res) {
+    var { id, firstname, lastname, middlename, gender, birthday, picture } = req.body;
+    var user = new User();
+    var flag = await User.findOne({ fbid: id });
+    if (isEmpty(flag)) {
+        user.fbid = id;
+        user.firstname = middlename + ' ' + firstname;
+        user.lastname = lastname;
+        if (gender === 'male') {
+            user.gender = 'Nam';
+        } else if (gender === 'female') {
+            user.gender = 'Nữ';
+        }
+        user.birthday = birthday;
+        user.namenosign = removeVietnameseTones(user.lastname + ' ' + user.firstname);
+        let address = '/images/' + Math.floor(Date.now() / 1000).toString() + 'img.png';
+        await download_image(picture, './public' + address);
+        user.avatar = address;
+        await user.save();
+        const accessToken = jwt.sign({ _id: id, auth: 'facebook', role: 'User' }, process.env.JWT_KEY);
+        const message = 'Successfully';
+        const data = {
+            'role': 'User',
+            'accessToken': accessToken
+        };
+        return responsehandler(res, 200, message, data, null);
+    } else {
+        const accessToken = jwt.sign({ _id: id, auth: 'facebook', role: 'User' }, process.env.JWT_KEY);
+        const message = 'Successfully';
+        const data = {
+            'role': 'User',
+            'accessToken': accessToken
+        };
+        return responsehandler(res, 200, message, data, null);
+    }
 }

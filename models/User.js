@@ -28,6 +28,12 @@ const userSchema = mongoose.Schema({
         enum : ['Nam','Nữ', 'Không muốn tiết lộ'],
         default: 'Không muốn tiết lộ'
     },
+    fbid: {
+        type: String
+    },
+    ggid: {
+        type: String
+    },
     playlists: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Playlist'
