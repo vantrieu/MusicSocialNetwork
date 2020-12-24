@@ -1,7 +1,6 @@
 //const express = require('express');
 const authUser = require('../middlewares/authUser');
 const userController = require('../controllers/user.controller');
-const {validateBody, validateImageFile, schemas} = require('../helpers/validate-handler');
 //const multer  = require('multer');
 //const path = require('path');
 

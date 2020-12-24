@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@hapi/joi": "^17.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -18,6 +17,7 @@
     "express-fileupload": "^1.2.0",
     "express-promise-router": "^4.0.1",
     "express-rate-limit": "^5.2.3",
+    "express-validator": "^6.8.1",
     "helmet": "^4.2.0",
     "jsonwebtoken": "^8.5.1",
     "mediaserver": "^0.1.1",
