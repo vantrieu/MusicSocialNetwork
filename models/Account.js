@@ -47,7 +47,13 @@ const accountSchema = mongoose.Schema({
         required: true,
         default: 'User'
     },
-    resetPasswordToken: String
+    resetPasswordToken: String,
+    isDelete: {
+        type: Number,
+        required: true,
+        enum : [1, 0],
+        default: 0
+    }
 })
 
 accountSchema.pre('save', async function (next) {

@@ -152,9 +152,10 @@ exports.changepassword = function (req, res, next) {
 }
 
 exports.registeraccount = function (req, res, next) {
+    console.log(req.body);
     const err = validationResult(req);
     if (!err.isEmpty()) {
-        return responsehandler(res, 422, err.array()[0].msg, {}, null);
+        return responsehandler(res, 200, err.array()[0].msg, {}, null);
     }
     try {
         let account = new Account();
@@ -189,7 +190,7 @@ exports.registeraccount = function (req, res, next) {
                             })
                             .catch(err => next(err));
                     } else {
-                        return responsehandler(res, 422, 'Tên đăng nhập hoặc email đã tồn tại!', {}, null);
+                        return responsehandler(res, 200, 'Tên đăng nhập hoặc email đã tồn tại!', {}, null);
                     }
                 }
             }
@@ -247,7 +248,8 @@ exports.registermoderator = function (req, res, next) {
 exports.getlistaccount = async function (req, res) {
     var query = {
         //role: { "$ne": 'Administrator' }
-        role: 'User'
+        role: 'User',
+        isDelete: { "$ne": 1 }
     };
     var options = {
         select: 'islock _id username email phonenumber createdAt',
@@ -264,7 +266,8 @@ exports.getlistaccount = async function (req, res) {
 
 exports.getlistmoderator = async function (req, res) {
     var query = {
-        role: 'Moderator'
+        role: 'Moderator',
+        isDelete: { "$ne": 1 }
     };
     var options = {
         select: 'islock _id username email phonenumber createdAt',
@@ -366,7 +369,7 @@ exports.loginFacebook = async function (req, res) {
         };
         return responsehandler(res, 200, message, data, null);
     } else {
-        var account = await Account.findOne({user_id: flag._id});
+        var account = await Account.findOne({ user_id: flag._id });
         const date = Math.floor(Date.now() / 1000);
         const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
         const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
@@ -380,5 +383,17 @@ exports.loginFacebook = async function (req, res) {
             'refreshToken': refreshToken
         };
         return responsehandler(res, 200, message, data, null);
+    }
+}
+
+exports.deleteModerator = async function (req, res, next) {
+    let user_id = req.body.id;
+    var account = await Account.findOne({ _id: user_id, role: 'Moderator' });
+    if (account != null) {
+        account.isDelete = 1;
+        await account.save();
+        return responsehandler(res, 200, 'Successfully', account, null);
+    } else {
+        return responsehandler(res, 200, 'Tài khoản không tồn tại!', {}, null);
     }
 }
