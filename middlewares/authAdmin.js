@@ -17,11 +17,11 @@ const authAdmin = async (req, res, next) => {
             next();
         } else {
             const message = 'Not authorized to access this resource';
-            return responsehandler(res, 401, message, null, null);
+            return responsehandler(res, 200, message, null, null);
         }
     } catch (err) {
         const message = 'Not authorized to access this resource';
-        return responsehandler(res, 401, message, null, null);
+        return responsehandler(res, 200, message, null, null);
     }
 }
 module.exports = authAdmin;
