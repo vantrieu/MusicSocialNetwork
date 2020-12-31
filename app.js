@@ -47,6 +47,7 @@ const albumRoute = require('./routes/album');
 const playlistRoute = require('./routes/playlist');
 const commentRoute = require('./routes/comment');
 const historyRoute = require('./routes/history');
+const { generatedb } = require('./constants/generatedb');
 
 //Routes
 app.use('/accounts', accountRoute);
@@ -70,31 +71,7 @@ mongoose.connection.once('open', function () {
     console.info('Successfully connected to the database!');
     const username = 'admin';
     Account.findOne({ username: username }, function (err, account) {
-        if (err)
-            console.log(err);
-        if (!account) {
-            let account = new Account();
-            let user = new User();
-            account.username = 'admin';
-            account.password = '12345678';
-            account.email = 'admin@gmail.com';
-            account.user_id = user._id;
-            account.role = 'Administrator';
-            account.phonenumber = '03867537750';
-            account.save();
-            user.firstname = 'Admin';
-            user.lastname = 'Super';
-            let temp = user.lastname + " " + user.firstname;
-            user.namenosign = removeVietnameseTones(temp);
-            user.avatar = "/images/noimage.jpg"
-            user.birthday = Date.now();
-            user.gender = 'Không muốn tiết lộ';
-            user.save();
-            console.log('Generate database success!');
-        } else {
-            console.log('Not generate database!');
-        }
-
+        generatedb(err, account);
     });
 });
 
