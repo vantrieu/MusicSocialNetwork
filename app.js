@@ -11,6 +11,7 @@ const fileUpload = require('express-fileupload');
 const responsehandler = require('./helpers/respone-handler');
 const removeVietnameseTones = require('./helpers/convertVie-handler');
 const cron = require('node-cron'), spawn = require('child_process').spawn;
+const driveApi = require('./controllers/driveapi.controller');
 require('dotenv/config');
 
 // CORS config
@@ -77,7 +78,7 @@ mongoose.connection.once('open', function () {
 });
 
 //Auto backup database
-cron.schedule('59 23 * * *', () => {
+cron.schedule('0 0 0 * * *', () => {
     let backupProcess = spawn('mongodump', [
         '--db=musicsocialnetwork',
         '--archive=./backup/musicsocialnetwork.gz',
@@ -89,8 +90,11 @@ cron.schedule('59 23 * * *', () => {
             console.log('Backup process exited with code ', code);
         else if (signal)
             console.error('Backup process was killed with singal ', signal);
-        else 
-            console.log('Successfully backedup the database')
+        else {
+            console.log('Successfully backedup the database');
+            driveApi.saveBakToDrive();
+        }
+            
     });
 });
 

@@ -19,6 +19,7 @@
     "express-promise-router": "^4.0.1",
     "express-rate-limit": "^5.2.3",
     "express-validator": "^6.8.1",
+    "googleapis": "39",
     "helmet": "^4.2.0",
     "jsonwebtoken": "^8.5.1",
     "mediaserver": "^0.1.1",
