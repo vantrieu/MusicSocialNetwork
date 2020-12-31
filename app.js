@@ -10,6 +10,7 @@ const User = require('./models/User');
 const fileUpload = require('express-fileupload');
 const responsehandler = require('./helpers/respone-handler');
 const removeVietnameseTones = require('./helpers/convertVie-handler');
+const cron = require('node-cron'), spawn = require('child_process').spawn;
 require('dotenv/config');
 
 // CORS config
@@ -72,6 +73,24 @@ mongoose.connection.once('open', function () {
     const username = 'admin';
     Account.findOne({ username: username }, function (err, account) {
         generatedb(err, account);
+    });
+});
+
+//Auto backup database
+cron.schedule('59 23 * * *', () => {
+    let backupProcess = spawn('mongodump', [
+        '--db=musicsocialnetwork',
+        '--archive=./backup/musicsocialnetwork.gz',
+        '--gzip'
+      ]);
+
+    backupProcess.on('exit', (code, signal) => {
+        if(code) 
+            console.log('Backup process exited with code ', code);
+        else if (signal)
+            console.error('Backup process was killed with singal ', signal);
+        else 
+            console.log('Successfully backedup the database')
     });
 });
 
