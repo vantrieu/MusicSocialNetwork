@@ -3,10 +3,11 @@ const fs = require('fs');
 const User = require('../models/User');
 const mediaserver = require('mediaserver');
 const path = require("path");
-const { Error } = require('mongoose');
 const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const History = require('../models/History');
+
+var mime = require('mime');
 
 exports.createTrack = async function (req, res, next) {
     const track = new Track(req.body);
@@ -81,4 +82,13 @@ exports.findbyname = async function (req, res, next) {
         item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
     })
     return responsehandler(res, 200, 'Successfully', tracks, null);
+}
+
+exports.downloadFile = async function (req, res) {
+    const trackname = req.params.trackname;
+    const track = await Track.findOne({ trackname: trackname }, ['_id', 'tracklink', 'trackname']);
+    const directoryPath = path.resolve(__dirname.replace('controllers', ''), track.tracklink);
+    var filename = path.basename(directoryPath);
+    // var mimetype = mime.lookup(directoryPath);
+    return res.download(directoryPath, filename)
 }
