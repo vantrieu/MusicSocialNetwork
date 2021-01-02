@@ -16,7 +16,7 @@ const userSchema = mongoose.Schema({
     },
     birthday: {
         type: Date,
-        required: true,
+        //required: true,
     },
     avatar: {
         type: String,
@@ -24,7 +24,7 @@ const userSchema = mongoose.Schema({
     },
     gender: {
         type: String,
-        required: true,
+        //required: true,
         enum : ['Nam','Nữ', 'Không muốn tiết lộ'],
         default: 'Không muốn tiết lộ'
     },

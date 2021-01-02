@@ -22,6 +22,7 @@ router.get('/find/:username', authUser, accountController.findAccount);
 router.post('/lock-account', authModer, accountController.lockaccount);
 router.post('/unlock-account', authModer, accountController.unlockaccount);
 router.post('/login-facebook', accountController.loginFacebook);
+router.post('/login-google', accountController.loginGoogle);
 router.post('/delete-moderator', authAdmin, accountController.deleteModerator);
 
 module.exports = router;
