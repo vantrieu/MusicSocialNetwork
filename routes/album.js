@@ -9,5 +9,6 @@ router.get('/detail/:albumID', authUser, AlbumController.detail);
 router.get('/top-album', authUser, AlbumController.topalbum);
 router.post('/remove-track', authUser, AlbumController.movetracktoalbum);
 router.get('/find', authUser, AlbumController.find);
+router.post('/delete/albumID', authUser, AlbumController.delete);
 
 module.exports = router;

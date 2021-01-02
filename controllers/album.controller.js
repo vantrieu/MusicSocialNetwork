@@ -68,3 +68,12 @@ exports.find = async function (req, res, next) {
     let albums = await Album.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'albumname', 'description', 'background'])
     return responsehandler(res, 200, 'Successfully', albums, null);
 }
+
+exports.delete = async function(req, res) {
+    const albumId = req.params.albumID;
+    await Album.findByIdAndDelete(albumId);
+    const track = await Track.findOne({album_id: albumId});
+    track.album_id = null;
+    await track.save();
+    responsehandler(res, 200, 'Successfully', [], null);
+}

@@ -71,3 +71,14 @@ exports.removeTrack = async function (req, res, next) {
     await track.save();
     return responsehandler(res, 200, 'Successfully', null, null);
 }
+
+exports.delete = async function(req, res) {
+    const playlistID = req.params.playlistID;
+    const playlist = await Playlist.findByIdAndDelete(playlistID);
+    const tracks = await Track.find({_id: { $in: playlist._doc.tracks }})
+    for (const track of tracks) {
+        track.playlists.pull(playlistID);
+        await track.save();
+    }
+    return responsehandler(res, 200, 'Successfully', [], null);
+}
