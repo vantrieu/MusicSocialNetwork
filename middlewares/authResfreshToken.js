@@ -1,8 +1,13 @@
 const jwt = require('jsonwebtoken')
 const Account = require('../models/Account')
 const responsehandler = require('../helpers/respone-handler');
+const { validationResult } = require('express-validator');
 
 const authResfreshToken = async (req, res, next) => {
+    const err = validationResult(req);
+    if (!err.isEmpty()) {
+        return responsehandler(res, 400, err.array()[0].msg, {}, null);
+    }
     try {
         //const token = req.header('Authorization').replace('Bearer ', '')
         const accessToken = req.headers['x-access-token'];

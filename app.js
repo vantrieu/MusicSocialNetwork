@@ -71,7 +71,7 @@ mongoose.connect(
 mongoose.connection.on('error', console.error.bind(console, 'Database connection error:'));
 mongoose.connection.once('open', function () {
     console.info('Successfully connected to the database!');
-    const username = 'admin';
+    const username = 'administrator';
     Account.findOne({ username: username }, function (err, account) {
         generatedb(err, account);
     });

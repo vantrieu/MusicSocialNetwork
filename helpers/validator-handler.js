@@ -1,6 +1,6 @@
-const { body } = require('express-validator');
+const { body, header } = require('express-validator');
 
-let validateRegister = [
+const validateRegister = [
     body('username', 'Tên đăng nhập không thể rỗng!').not().isEmpty(),
     body('username', 'Tên đăng nhập phải có ít nhất 6 ký tự!').isLength({ min: 6 }),
     body('password', 'Mật khẩu không thể rỗng!').not().isEmpty(),
@@ -16,6 +16,25 @@ let validateRegister = [
     body('gender', 'Giới tính không thể rỗng!').not().isEmpty(),
 ];
 
+const validateLogin = [
+    body('username', 'Tên đăng nhập không thể rỗng!').not().isEmpty(),
+    body('username', 'Tên đăng nhập phải có ít nhất 6 ký tự!').isLength({ min: 6 }),
+    body('password', 'Mật khẩu không thể rỗng!').not().isEmpty(),
+    body('password', 'Mật khẩu phải có ít nhất 6 ký tự!').isLength({ min: 6 })
+];
+
+const validateAuthRefresh = [
+    header('x-access-token', `Headers 'x-access-token' không thể rỗng!`).not().isEmpty(),
+    header('x-refresh-token', `Headers 'x-refresh-token' không thể rỗng!`).not().isEmpty()
+];
+
+const validateAuth = [
+    header('x-access-token', `Headers 'x-access-token' không thể rỗng!`).not().isEmpty()
+];
+
 module.exports = {
-    validateRegister
+    validateRegister,
+    validateLogin,
+    validateAuthRefresh,
+    validateAuth
 };

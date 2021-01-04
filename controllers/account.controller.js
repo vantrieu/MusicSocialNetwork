@@ -35,6 +35,10 @@ function download_image(url, image_path) {
 }
 
 exports.login = async function (req, res) {
+    const err = validationResult(req);
+    if (!err.isEmpty()) {
+        return responsehandler(res, 422, err.array()[0].msg, {}, null);
+    }
     const pass = req.body.password;
     const username = req.body.username;
     const account = await Account.findOne({ username });

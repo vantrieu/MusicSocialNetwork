@@ -8,7 +8,7 @@ exports.generatedb = function (err, account) {
     if (!account) {
         let account = new Account();
         let user = new User();
-        account.username = 'admin';
+        account.username = 'administrator';
         account.password = '12345678';
         account.email = 'admin@gmail.com';
         account.user_id = user._id;
