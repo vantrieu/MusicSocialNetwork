@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const mongoosePaginate = require('mongoose-paginate-v2');
@@ -29,12 +28,7 @@ const accountSchema = mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        lowercase: true,
-        validate: value => {
-            if (!validator.isEmail(value)) {
-                throw new Error({ error: 'Invalid Email address' })
-            }
-        }
+        lowercase: true
     },
     islock: {
         type: Number,

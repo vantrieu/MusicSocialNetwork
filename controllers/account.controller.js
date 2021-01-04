@@ -40,18 +40,18 @@ exports.login = async function (req, res) {
     const account = await Account.findOne({ username });
     // return result if the username is not found in the database
     if (account == null) {
-        const message = 'Đăng nhập thất bại! Tài khoản không tồn tại!'
+        const message = 'Tên đăng nhập hoặc mật khẩu không đúng!';
         return responsehandler(res, 200, message, [], null);
     }
     const isPasswordMatch = await bcrypt.compare(pass, account.password)
     // return result if password does not match
     if (!isPasswordMatch) {
-        const message = 'Đăng nhập thất bại! Tên đăng nhập hoặc mật khẩu không đúng!'
+        const message = 'Tên đăng nhập hoặc mật khẩu không đúng!';
         return responsehandler(res, 200, message, [], null);
     }
     // return result if the account is locked
     if (account.islock === 1) {
-        const message = 'Đăng nhập thất bại! Tài khoản đang bị khóa!'
+        const message = 'Tài khoản đang bị khóa!'
         return responsehandler(res, 200, message, [], null);
     }
     const date = Math.floor(Date.now() / 1000);
@@ -69,18 +69,14 @@ exports.login = async function (req, res) {
     return responsehandler(res, 200, message, data, null);
 }
 
-exports.refreshtoken = function (req, res, next) {
+exports.refreshtoken = function (req, res) {
     const account = res.locals.account;
     const date = Math.floor(Date.now() / 1000);
     const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-    const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
     const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-    const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
     const data = {
         'expireIn': expireAccessToken,
-        'role': account.role,
-        'accessToken': accessToken,
-        'refreshToken': refreshToken
+        'accessToken': accessToken
     };
     return responsehandler(res, 200, 'Successfully', data, null)
 }
@@ -107,12 +103,12 @@ exports.fortgotpassword = async function (req, res, next) {
                     var mainOptions = {
                         from: 'music.social.network.developer@gmail.com',
                         to: account.email,
-                        subject: 'Reset Password',
-                        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-                            'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-                            `${process.env.ENVIROMENT}/accounts/reset/` + account.resetPasswordToken + '\n\n' +
-                            'Note: The link is valid for 5 minutes. \n' +
-                            'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+                        subject: 'Khôi phục mật khẩu',
+                        text: 'Bạn nhận được thông báo này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.\n' +
+                            'Vui lòng nhấp vào liên kết dưới đây hoặc sao chép liên kết và dán vào trình duyệt của bạn để hoàn tất quá trình:\n\n' +
+                            'http://localhost:3001/reset-password/' + account.resetPasswordToken + '\n\n' +
+                            'Lưu ý: Liên kế chỉ có hiệu lực trong 5 phút kể từ khi nhận được thư này! \n' +
+                            'Nếu bạn không yêu cầu điều này, vui lòng bỏ qua thư này và mật khẩu của bạn sẽ không thay đổi!\n'
                     }
                     transporter.sendMail(mainOptions, function (err, info) {
                         if (err) {
@@ -152,10 +148,9 @@ exports.changepassword = function (req, res, next) {
 }
 
 exports.registeraccount = function (req, res, next) {
-    console.log(req.body);
     const err = validationResult(req);
     if (!err.isEmpty()) {
-        return responsehandler(res, 200, err.array()[0].msg, {}, null);
+        return responsehandler(res, 422, err.array()[0].msg, {}, null);
     }
     try {
         let account = new Account();
@@ -370,19 +365,23 @@ exports.loginFacebook = async function (req, res) {
         return responsehandler(res, 200, message, data, null);
     } else {
         var account = await Account.findOne({ user_id: flag._id });
-        const date = Math.floor(Date.now() / 1000);
-        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
-        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-        const message = 'Successfully';
-        const data = {
-            'expireIn': expireAccessToken,
-            'role': account.role,
-            'accessToken': accessToken,
-            'refreshToken': refreshToken
-        };
-        return responsehandler(res, 200, message, data, null);
+        if (account.islock === 1) {
+            return responsehandler(res, 200, 'Tài khoản đang bị khóa!', {}, null);
+        } else {
+            const date = Math.floor(Date.now() / 1000);
+            const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+            const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+            const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+            const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
+            const message = 'Successfully';
+            const data = {
+                'expireIn': expireAccessToken,
+                'role': account.role,
+                'accessToken': accessToken,
+                'refreshToken': refreshToken
+            };
+            return responsehandler(res, 200, message, data, null);
+        }
     }
 }
 
@@ -433,18 +432,22 @@ exports.loginGoogle = async function (req, res) {
         return responsehandler(res, 200, message, data, null);
     } else {
         var account = await Account.findOne({ user_id: flag._id });
-        const date = Math.floor(Date.now() / 1000);
-        const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-        const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
-        const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-        const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-        const message = 'Successfully';
-        const data = {
-            'expireIn': expireAccessToken,
-            'role': account.role,
-            'accessToken': accessToken,
-            'refreshToken': refreshToken
-        };
-        return responsehandler(res, 200, message, data, null);
+        if (account.islock === 1) {
+            return responsehandler(res, 200, 'Tài khoản đang bị khóa!', data, null);
+        } else {
+            const date = Math.floor(Date.now() / 1000);
+            const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
+            const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
+            const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
+            const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
+            const message = 'Successfully';
+            const data = {
+                'expireIn': expireAccessToken,
+                'role': account.role,
+                'accessToken': accessToken,
+                'refreshToken': refreshToken
+            };
+            return responsehandler(res, 200, message, data, null);
+        }
     }
 }

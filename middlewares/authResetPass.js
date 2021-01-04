@@ -16,12 +16,12 @@ const authResetPass = async (req, res, next) => {
             res.locals.account = account;
             next()
         } else {
-            const message = 'Not authorized to access this resource';
-            return responsehandler(res, 200, message, null, null);
+            const message = 'Không có quyền truy cập tài nguyên này!';
+            return responsehandler(res, 403, message, null, null);
         }
     } catch (err) {
-        const message = 'Not authorized to access this resource';
-        return responsehandler(res, 200, message, null, null);
+        const message = 'Không có quyền truy cập tài nguyên này!';
+        return responsehandler(res, 403, message, null, null);
     }
 }
 module.exports = authResetPass;

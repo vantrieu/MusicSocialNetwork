@@ -17,8 +17,8 @@ const authModer = async (req, res, next) => {
             next();
         }
     } catch (err) {
-        const message = 'Not authorized to access this resource';
-        return responsehandler(res, 200, message, null, null);
+        const message = 'Không có quyền truy cập tài nguyên này!';
+        return responsehandler(res, 403, message, null, null);
     }
 }
 module.exports = authModer;

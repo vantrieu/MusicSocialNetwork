@@ -9,7 +9,7 @@ const authResfreshToken = async (req, res, next) => {
         const refreshToken = req.headers['x-refresh-token'];
         const data_access_token = jwt.verify(accessToken, process.env.JWT_KEY);
         const data_refresh_token = jwt.verify(refreshToken, process.env.JWT_KEY);
-        const account = await Account.findOne({ _id: data_access_token._id })
+        const account = await Account.findOne({ _id: data_access_token._id });
         if (!account) {
             throw new Error()
         }
@@ -18,12 +18,12 @@ const authResfreshToken = async (req, res, next) => {
             res.locals.account = account;
             next()
         } else {
-            const message = 'Not authorized to access this resource';
-            return responsehandler(res, 200, message, null, null);
+            const message = 'Không có quyền truy cập tài nguyên này!';
+            return responsehandler(res, 403, message, null, null);
         }
     } catch (err) {
-        const message = 'Not authorized to access this resource';
-        return responsehandler(res, 200, message, null, null);
+        const message = 'Không có quyền truy cập tài nguyên này!';
+        return responsehandler(res, 403, message, null, null);
     }
 }
 module.exports = authResfreshToken;

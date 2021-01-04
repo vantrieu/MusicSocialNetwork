@@ -28,6 +28,12 @@ const userSchema = mongoose.Schema({
         enum : ['Nam','Nữ', 'Không muốn tiết lộ'],
         default: 'Không muốn tiết lộ'
     },
+    islock: {
+        type: Number,
+        required: true,
+        enum : [1, 0],
+        default: 0
+    },
     fbid: {
         type: String
     },
