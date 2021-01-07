@@ -7,8 +7,6 @@ const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const History = require('../models/History');
 
-var mime = require('mime');
-
 exports.createTrack = async function (req, res, next) {
     const track = new Track(req.body);
     track.namenosign = removeVietnameseTones(track.trackname);
@@ -89,7 +87,8 @@ exports.downloadFile = async function (req, res) {
     const trackname = req.params.trackname;
     const track = await Track.findOne({ trackname: trackname }, ['_id', 'tracklink', 'trackname']);
     const directoryPath = path.resolve(__dirname.replace('controllers', ''), track.tracklink);
-    var filename = path.basename(directoryPath);
+    // var filename = path.basename(directoryPath);
     // var mimetype = mime.lookup(directoryPath);
-    return res.download(directoryPath, filename)
+    // return res.download(directoryPath, filename)
+    return res.download(directoryPath);
 }
