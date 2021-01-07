@@ -66,9 +66,10 @@ exports.playmusic = async function (req, res, next) {
 }
 
 exports.topmusic = async function (req, res, next) {
+    let limit = parseInt(req.query.limit) || 100;
     const tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background'])
         .sort({ total: -1 })
-        .limit(100);
+        .limit(limit);
     tracks.forEach(function (item) {
         item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
     })
