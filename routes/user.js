@@ -8,7 +8,8 @@ const { validateAuth } = require('../helpers/validator-handler');
 const router = require("express-promise-router")();
 
 router.get('/my-profile', validateAuth, authUser, userController.me);
-router.get('/view-profile', validateAuth, authUser, userController.viewProfile);
+router.get('/find', validateAuth, authUser, userController.find);
+router.get('/view-orther-profile', validateAuth, authUser, userController.orther);
 router.post('/changeavatar', validateAuth, authUser, userController.uploadimg);
 router.post('/update-profile', validateAuth, authUser, userController.changeprofile);
 router.post('/follow-user', validateAuth, authUser, userController.createfollow);

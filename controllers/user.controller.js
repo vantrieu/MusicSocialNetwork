@@ -1,14 +1,10 @@
 const moment = require('moment')
 const User = require('../models/User');
 const Follow = require('../models/Follow');
-const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
-const fileUpload = require('express-fileupload');
 const fs = require('fs');
-const jwt = require('jsonwebtoken');
 const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
-const Album = require('../models/Album');
+const buildMetaHandler = require('../helpers/build-meta-handler');
 const Track = require('../models/Track');
 
 exports.me = function (req, res, next) {
@@ -24,25 +20,43 @@ exports.me = function (req, res, next) {
     });
 }
 
-exports.viewProfile = function (req, res, next) {
-    const name = removeVietnameseTones(req.body.name);
-    User.find({ namenosign: { $regex: '.*' + name + '.*' } }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender'], function (err, users) {
-        if (err)
-            next(err);
-        else {
-            users.forEach(function (item) {
-                item._doc.birthday = moment(item._doc.birthday).format('DD/MM/YYYY');
-                if (item.avatar !== '')
-                    item.avatar = process.env.ENVIROMENT + item.avatar;
-            });
-            return responsehandler(res, 200, 'Successfully', users, null);
-        }
+exports.find = async function (req, res, next) {
+    let name = removeVietnameseTones(req.body.name);
+    var query = {
+        //role: { "$ne": 'Administrator' }
+        namenosign: { $regex: '.*' + name + '.*' },
+        isDelete: { "$ne": 1 }
+    };
+    var options = {
+        select: 'avatar _id birthday firstname lastname gender',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    let users = await User.paginate(query, options);
+    users.docs.forEach(function (item) {
+        item._doc.birthday = moment(item._doc.birthday).format('DD/MM/YYYY');
+        if (item.avatar !== '')
+            item.avatar = process.env.ENVIROMENT + item.avatar;
     });
+    var meta = buildMetaHandler(users);
+    return responsehandler(res, 200, 'Successfully', users.docs, meta);
+}
+
+exports.orther = async function (req, res, next) {
+    let userID = req.body.id;
+    let user = await User.findById({ _id: userID }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender']);
+    if (user) {
+        user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
+        user.avatar = process.env.ENVIROMENT + user.avatar;
+        return responsehandler(res, 200, 'Successfully', user, null);
+    } else {
+        return responsehandler(res, 200, 'Successfully', {}, null);
+    }
 }
 
 exports.uploadimg = async function (req, res, next) {
     if (!req.files)
-        return responsehandler(res, 400, 'Bad request', null, null);
+        return responsehandler(res, 400, 'Không tồn tại tệp tin!', null, null);
     else {
         try {
             let avatar = req.files.avatar;
@@ -50,16 +64,18 @@ exports.uploadimg = async function (req, res, next) {
             if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
                 let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
                 avatar.mv('./public/images/' + address);
-                try {
-                    fs.unlinkSync('./public' + user.avatar);
-                } catch (err) {
-                    console.error(err)
+                if (user.avatar !== '/images/noimage.jpg') {
+                    try {
+                        fs.unlinkSync('./public' + user.avatar);
+                    } catch (err) {
+                        console.error(err)
+                    }
                 }
                 user.avatar = '/images/' + address;
                 user.save();
-                return responsehandler(res, 201, 'Successfully', null, null);
+                return responsehandler(res, 201, 'Successfully', user, null);
             } else {
-                return responsehandler(res, 400, 'Only accept jpeg or png formats', null, null);
+                return responsehandler(res, 400, 'Chỉ chấp nhận định dạng .jpeg hoặc .png', null, null);
             }
         } catch (err) {
             next(err);
@@ -68,30 +84,29 @@ exports.uploadimg = async function (req, res, next) {
 }
 
 exports.changeprofile = async function (req, res, next) {
-    const account = res.locals.account.user_id;
-    const user = await User.findById({ _id: account })
-    if (req.body.firstname !== undefined)
-        user.firstname = req.body.firstname;
-    if (req.body.lastname !== undefined)
-        user.lastname = req.body.lastname;
-    if (req.body.birthday !== undefined)
-        user.birthday = req.body.birthday;
-    if (req.body.gender !== undefined)
-        user.gender = req.body.gender;
+    const userID = res.locals.account.user_id;
+    let body = req.body;
+    await User.updateOne({ _id: userID }, { $set: body });
+    let user = await User.findOne({ _id: userID }, ['avatar', '_id', 'birthday', 'firstname', 'lastname', 'gender', 'namenosign']);
     let temp = user.lastname + " " + user.firstname;
     user.namenosign = removeVietnameseTones(temp);
-    user.updatedAt = Date.now();
     await user.save();
-    return responsehandler(res, 201, 'Successfully', null, null);
+    user._doc.namenosign = undefined;
+    user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
+    user._doc.avatar = process.env.ENVIROMENT + user._doc.avatar;
+    return responsehandler(res, 201, 'Successfully', user, null);
 }
 
 exports.createfollow = async function (req, res, next) {
     let follow_id = res.locals.account.user_id;
     let user_id = req.body.id;
-    let follow = new Follow();
-    follow.follow_id = follow_id;
-    follow.user_id = user_id;
-    await follow.save();
+    let follow = await Follow.findOne({ follow_id: follow_id, user_id: user_id });
+    if (follow === null) {
+        follow = new Follow();
+        follow.follow_id = follow_id;
+        follow.user_id = user_id;
+        await follow.save();
+    }
     return responsehandler(res, 201, 'Successfully', null, null);
 }
 
@@ -101,11 +116,23 @@ exports.getfollowme = async function (req, res, next) {
     follows.forEach(function (item) {
         lstfollow_id.push(item.follow_id)
     });
-    let users = await User.find({}, ['avatar', 'firstname', 'lastname', 'gender']).where('_id').in(lstfollow_id);
-    users.forEach(function (item) {
-        item._doc.avatar = process.env.ENVIROMENT + item._doc.avatar;
+    var query = {
+        //role: { "$ne": 'Administrator' }
+        _id: { $in: lstfollow_id }
+        //islock: { "$ne": 1 }
+    };
+    var options = {
+        select: 'avatar _id firstname lastname gender',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    let users = await User.paginate(query, options);
+    users.docs.forEach(function (item) {
+        if (item.avatar !== '')
+            item.avatar = process.env.ENVIROMENT + item.avatar;
     });
-    return responsehandler(res, 200, 'Successfully', users, null);
+    var meta = buildMetaHandler(users);
+    return responsehandler(res, 200, 'Successfully', users.docs, meta);
 }
 
 exports.getfollowbyme = async function (req, res, next) {
@@ -114,12 +141,23 @@ exports.getfollowbyme = async function (req, res, next) {
     follows.forEach(function (item) {
         lstfollow_id.push(item.user_id)
     });
-    console.log(lstfollow_id)
-    let users = await User.find({}, ['avatar', 'firstname', 'lastname', 'gender']).where('_id').in(lstfollow_id);
-    users.forEach(function (item) {
-        item._doc.avatar = process.env.ENVIROMENT + item._doc.avatar;
+    var query = {
+        //role: { "$ne": 'Administrator' }
+        _id: { $in: lstfollow_id }
+        //islock: { "$ne": 1 }
+    };
+    var options = {
+        select: 'avatar _id firstname lastname gender',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 15
+    };
+    let users = await User.paginate(query, options);
+    users.docs.forEach(function (item) {
+        if (item.avatar !== '')
+            item.avatar = process.env.ENVIROMENT + item.avatar;
     });
-    return responsehandler(res, 200, 'Successfully', users, null);
+    var meta = buildMetaHandler(users);
+    return responsehandler(res, 200, 'Successfully', users.docs, meta);
 }
 
 exports.unfollow = function (req, res, next) {
@@ -127,89 +165,27 @@ exports.unfollow = function (req, res, next) {
         if (err)
             next(err);
         else {
-            return responsehandler(res, 200, 'Successfully', null, null);
+            return responsehandler(res, 201, 'Successfully', null, null);
         }
     });
 }
 
 exports.mymusic = async function (req, res, next) {
-    const results = (await User.findById(res.locals.account.user_id).populate('tracks')).tracks;
-    results.forEach(function (item) {
-        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
-        item._doc.comments = undefined;
-        item._doc.playlists = undefined;
-        item._doc.user_id = undefined;
-        item._doc.createdAt = undefined;
-        item._doc.updatedAt = undefined;
-        item._doc.__v = undefined;
+    let results = (await User.findById(res.locals.account.user_id, ['tracks'])).tracks;
+    var query = {
+        _id: { $in: results }
+    };
+    var options = {
+        select: '_id tracklink total trackname description background createdAt',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 100
+    };
+    let tracks = await Track.paginate(query, options);
+    tracks.docs.forEach(function (item) {
+        if (item.tracklink !== '')
+            item.tracklink = process.env.ENVIROMENT + '/' + item.tracklink;
+        item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY HH:mm:ss');
     });
-    return responsehandler(res, 200, 'Successfully', results, null);
-}
-
-
-
-
-exports.uploadmp3 = function (req, res, next) {
-    try {
-        if (!req.files) {
-            return res.send({
-                status: false,
-                message: 'No file uploaded'
-            });
-        } else {
-            let fileMusic = req.files.music;
-            if (fileMusic.mimetype != 'audio/mpeg') {
-                return res.status(400).send({
-                    message: 'Chỉ chấp nhận tập tin định dạng mp3!'
-                });
-            } else {
-                fileMusic.mv('./public/musics/' + fileMusic.name);
-                return res.status(201).send({
-                    message: 'File is uploaded'
-                });
-            }
-        }
-    } catch (err) {
-        return res.status(500).send(err);
-    }
-}
-
-exports.createAlbum = async function (req, res, next) {
-    const user_id = res.locals.account.user_id;
-    const { albumname, description } = req.value.body;
-    let album = new Album({ user_id, albumname, description });
-    let background = req.files.background;
-    if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
-        let address = Math.floor(Date.now() / 1000).toString() + background.name;
-        background.mv('./public/images/' + address);
-        album.background = process.env.ENVIROMENT + '/images/' + address;
-    } else {
-        return res.res.status(400).json({
-            message: 'Chỉ chấp nhận định dạng jpeg hoặc png!'
-        });
-    }
-    await album.save()
-        .then(() => {
-            return res.status(201).json({
-                message: 'Create success!'
-            })
-        })
-        .catch(() => {
-            fs.unlinkSync('./public/images/' + address);
-        })
-}
-
-exports.addListTrackAlbum = async function (req, res, next) {
-    const { listtrack, albumid } = req.body;
-    const album = await Album.findById({ _id: albumid });
-    listtrack.forEach(element => {
-        album.tracks.push(element);
-        Track.findById({ _id: element })
-            .then(track => {
-                track.album_id = albumid;
-                track.save()
-            })
-    });
-    await album.save();
-    return res.status(200).json(album);
+    let meta = buildMetaHandler(tracks);
+    return responsehandler(res, 200, 'Successfully', tracks.docs, meta);
 }

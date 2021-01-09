@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const trackSchema = mongoose.Schema({
     user_id: {
@@ -47,4 +48,5 @@ const trackSchema = mongoose.Schema({
 })
 
 trackSchema.set('timestamps', true);
+trackSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Track', trackSchema)
