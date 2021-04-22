@@ -189,3 +189,35 @@ exports.mymusic = async function (req, res, next) {
     let meta = buildMetaHandler(tracks);
     return responsehandler(res, 200, 'Successfully', tracks.docs, meta);
 }
+
+exports.UpdateProfile = async function (req, res, next) {
+    const user = await User.findById({ _id: res.locals.account.user_id });
+    if (req.files?.image) {
+        try {
+            let avatar = req.files.image;
+            if (avatar.mimetype == 'image/jpeg' || avatar.mimetype == 'image/png') {
+                let address = Math.floor(Date.now() / 1000).toString() + avatar.name;
+                avatar.mv('./public/images/' + address);
+                if (user.avatar !== '/images/noimage.jpg') {
+                    try {
+                        fs.unlinkSync('./public' + user.avatar);
+                    } catch (err) {
+                        console.error(err)
+                    }
+                }
+                user.avatar = '/images/' + address;
+            } else {
+                return responsehandler(res, 400, 'Chỉ chấp nhận định dạng .jpeg hoặc .png', null, null);
+            }
+        } catch (err) {
+            next(err);
+        }
+    }
+    const userID = res.locals.account.user_id;
+    let body = req.body;
+    await User.updateOne({ _id: userID }, { $set: body });
+    let temp = user.lastname + " " + user.firstname;
+    user.namenosign = removeVietnameseTones(temp);
+    await user.save();
+    return responsehandler(res, 200, 'Successfully', null, null);
+}

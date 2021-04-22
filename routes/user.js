@@ -17,6 +17,7 @@ router.get('/follow-me', validateAuth, authUser, userController.getfollowme);
 router.get('/follow-by-me', validateAuth, authUser, userController.getfollowbyme);
 router.post('/unfollow-user', validateAuth, authUser, userController.unfollow);
 router.get('/my-music', validateAuth, authUser, userController.mymusic);
+router.put('/change-profile', validateAuth, authUser, userController.UpdateProfile);
 
 
 
