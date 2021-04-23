@@ -64,7 +64,7 @@ app.use('/tracktypes', tracktypeRoute);
 
 //Connect mongodb
 mongoose.connect(
-    process.env.DB_CONNECTION, {
+    process.env.DB_CONNECTION_ATLAS, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
@@ -111,7 +111,10 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     const error = app.get('env') === 'development' ? err : {};
     const status = err.status || 500;
-    return responsehandler(res, status, error.message, null, null);
+    //return responsehandler(res, status, error.message, null, null);
+    return res.status(status).json({
+        error: error.message
+    })
 });
 
 //Start listening to the server
