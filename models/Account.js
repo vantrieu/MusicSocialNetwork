@@ -47,6 +47,12 @@ const accountSchema = mongoose.Schema({
         required: true,
         enum : [1, 0],
         default: 0
+    },
+    refreshToken: {
+        type: String,
+        minLength: 50,
+        maxLength: 50,
+        default: null
     }
 })
 

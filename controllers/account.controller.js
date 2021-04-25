@@ -10,6 +10,7 @@ const { validationResult } = require('express-validator');
 const buildMetaHandler = require('../helpers/build-meta-handler');
 const axios = require('axios');
 const fs = require('fs');
+var randomstring = require("randomstring");
 
 function isEmpty(obj) {
     for (var key in obj) {
@@ -37,52 +38,62 @@ function download_image(url, image_path) {
 exports.login = async function (req, res) {
     const err = validationResult(req);
     if (!err.isEmpty()) {
-        return responsehandler(res, 422, err.array()[0].msg, {}, null);
+        return res.status(422).json({
+            error: err.array()[0].msg
+        })
     }
-    const pass = req.body.password;
-    const username = req.body.username;
+    const { password, username } = req.body;
     const account = await Account.findOne({ username });
-    // return result if the username is not found in the database
     if (account == null) {
-        const message = 'Tên đăng nhập hoặc mật khẩu không đúng!';
-        return responsehandler(res, 200, message, [], null);
+        return res.status(401).json({
+            error: 'Tên đăng nhập hoặc mật khẩu không đúng!'
+        })
     }
-    const isPasswordMatch = await bcrypt.compare(pass, account.password)
-    // return result if password does not match
+    const isPasswordMatch = await bcrypt.compare(password, account.password)
     if (!isPasswordMatch) {
-        const message = 'Tên đăng nhập hoặc mật khẩu không đúng!';
-        return responsehandler(res, 200, message, [], null);
+        return res.status(401).json({
+            error: 'Tên đăng nhập hoặc mật khẩu không đúng!'
+        })
     }
-    // return result if the account is locked
     if (account.islock === 1) {
-        const message = 'Tài khoản đang bị khóa!'
-        return responsehandler(res, 200, message, [], null);
+        return res.status(401).json({
+            error: 'Tài khoản đang bị khóa!'
+        })
     }
     const date = Math.floor(Date.now() / 1000);
     const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
-    const expireRefreshToken = date + parseInt(process.env.JWT_REFRESHTOKEN_EXPIRATION);
     const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
-    const refreshToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireRefreshToken }, process.env.JWT_KEY);
-    const message = 'Successfully';
+    const refreshToken = randomstring.generate(50);
+    account.refreshToken = refreshToken;
+    await account.save();
     const data = {
         'expireIn': expireAccessToken,
         'role': account.role,
         'accessToken': accessToken,
         'refreshToken': refreshToken
     };
-    return responsehandler(res, 200, message, data, null);
+    return res.status(200).json(data);
 }
 
-exports.refreshtoken = function (req, res) {
+exports.refreshtoken = async function (req, res) {
+    let refreshToken = req.headers['x-refresh-token'];
     const account = res.locals.account;
+    if (account.refreshToken !== refreshToken)
+        return res.status(403).json({
+            error: 'Không có quyền truy cập tài nguyên này!'
+        })
+    refreshToken = randomstring.generate(50);
+    account.refreshToken = refreshToken;
+    await account.save();
     const date = Math.floor(Date.now() / 1000);
     const expireAccessToken = date + parseInt(process.env.JWT_TOKEN_EXPIRATION);
     const accessToken = jwt.sign({ _id: account._id, role: account.role, expireIn: expireAccessToken }, process.env.JWT_KEY);
     const data = {
         'expireIn': expireAccessToken,
-        'accessToken': accessToken
+        'accessToken': accessToken,
+        'refreshToken': refreshToken
     };
-    return responsehandler(res, 200, 'Successfully', data, null)
+    return res.status(200).json(data);
 }
 
 exports.fortgotpassword = async function (req, res, next) {
