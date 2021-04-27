@@ -45,7 +45,6 @@ app.get('/', function (req, res) {
 const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
 const trackRoute = require('./routes/track');
-const albumRoute = require('./routes/album');
 const playlistRoute = require('./routes/playlist');
 const commentRoute = require('./routes/comment');
 const historyRoute = require('./routes/history');
@@ -56,7 +55,6 @@ const tracktypeRoute = require('./routes/tracktype');
 app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
 app.use('/tracks', trackRoute);
-app.use('/albums', albumRoute);
 app.use('/playlists', playlistRoute);
 app.use('/comments', commentRoute);
 app.use('/histories', historyRoute);

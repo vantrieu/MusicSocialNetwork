@@ -7,10 +7,9 @@ const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const History = require('../models/History');
 
-exports.createTrack = async function (req, res, next) {
+exports.createTrack = async function (req, res) {
     const track = new Track(req.body);
     track.namenosign = removeVietnameseTones(track.trackname);
-    track.user_id = res.locals.account.user_id;
     let background = req.files.background;
     if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
         let address = Math.floor(Date.now() / 1000).toString() + background.name;
@@ -29,22 +28,56 @@ exports.createTrack = async function (req, res, next) {
     }
     await track.save()
         .then(async (track) => {
-            console.log(res.locals.account.user_id);
-            const user = await User.findById(res.locals.account.user_id);
-            user.tracks.push(track._id);
-            await user.save()
-                .then(() => {
-                    return responsehandler(res, 201, 'Successfully', null, null);
-                })
+            return responsehandler(res, 201, 'Successfully', null, null);
         })
         .catch(() => {
             fs.unlinkSync('./public/images/' + address);
             fs.unlinkSync('./musics/' + fileMusic.name);
         })
-
 }
 
-exports.playmusic = async function (req, res, next) {
+exports.updateTrack = async function (req, res) {
+    const id = req.params.trackID;
+    const track = await Track.findById(id);
+    track.trackname = req.body.trackname;
+    track.description = req.body.description;
+    track.namenosign = removeVietnameseTones(track.trackname);
+    let background = req.files?.background;
+    if (background) {
+        if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
+            let address = Math.floor(Date.now() / 1000).toString() + background.name;
+            console.log(address)
+            background.mv('./public/images/' + address);
+            track.background = process.env.ENVIROMENT + '/images/' + address;
+        } else {
+            return responsehandler(res, 400, 'Bad request', null, null);
+        }
+    }
+    await track.save()
+        .then(() => {
+            return responsehandler(res, 200, 'Successfully', null, null);
+        })
+        .catch(() => {
+            fs.unlinkSync('./public/images/' + address);
+        })
+}
+
+exports.deleteTrack = async function (req, res) {
+    const id = req.params.trackID;
+    const track = await Track.findById(id);
+    const backGroundFileName = './public/images/' + track.background.split("/")[4];
+    await Track.deleteOne({ _id: id })
+        .then(() => {
+            fs.unlinkSync(backGroundFileName);
+            fs.unlinkSync('./' + track.tracklink);
+    return responsehandler(res, 200, 'Successfully', null, null);
+    })
+    .catch(() => {
+        return responsehandler(res, 404, 'Not Found', null, null);
+    })
+}
+
+exports.playmusicPrivate = async function (req, res) {
     const id = req.params.trackID;
     const track = await Track.findById(id);
     const user_id = req.params.userID;
@@ -63,7 +96,19 @@ exports.playmusic = async function (req, res, next) {
     return responsehandler(res, 200, 'Not found', null, null);
 }
 
-exports.topmusic = async function (req, res, next) {
+exports.playmusicPublic = async function (req, res) {
+    const id = req.params.trackID;
+    const track = await Track.findById(id);
+    if (track !== null) {
+        var link = path.join(track.tracklink);
+        track.total = track.total + 1;
+        await track.save();
+        return mediaserver.pipe(req, res, link);
+    }
+    return responsehandler(res, 200, 'Not found', null, null);
+}
+
+exports.topmusic = async function (req, res) {
     let limit = parseInt(req.query.limit) || 100;
     const tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background'])
         .sort({ total: -1 })
@@ -74,7 +119,7 @@ exports.topmusic = async function (req, res, next) {
     return responsehandler(res, 200, 'Successfully', tracks, null)
 }
 
-exports.findbyname = async function (req, res, next) {
+exports.findbyname = async function (req, res) {
     let keyword = removeVietnameseTones(req.body.trackname);
     const tracks = await Track.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
     tracks.forEach(function (item) {
@@ -87,8 +132,5 @@ exports.downloadFile = async function (req, res) {
     const trackname = req.params.trackname;
     const track = await Track.findOne({ trackname: trackname }, ['_id', 'tracklink', 'trackname']);
     const directoryPath = path.resolve(__dirname.replace('controllers', ''), track.tracklink);
-    // var filename = path.basename(directoryPath);
-    // var mimetype = mime.lookup(directoryPath);
-    // return res.download(directoryPath, filename)
     return res.download(directoryPath);
 }

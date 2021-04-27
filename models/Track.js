@@ -2,11 +2,6 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
 const trackSchema = mongoose.Schema({
-    user_id: {
-        type: String,
-        required: true,
-        trim: true
-    },
     background: {
         type: String,
         required: true
@@ -30,9 +25,6 @@ const trackSchema = mongoose.Schema({
         type: Number,
         required: true,
         default: 0
-    },
-    album_id: {
-        type: mongoose.SchemaTypes.ObjectId
     },
     tracktype_id: {
         type: mongoose.SchemaTypes.ObjectId

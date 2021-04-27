@@ -44,14 +44,6 @@ const userSchema = mongoose.Schema({
     playlists: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Playlist'
-    }],
-    albums: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Album'
-    }],
-    tracks: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Track'
     }]
 })
 
