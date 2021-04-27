@@ -6,9 +6,6 @@ const tracktypeSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    description: {
-        type: String
-    },
     isDelete: {
         type: Number,
         required: true,

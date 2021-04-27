@@ -5,8 +5,8 @@ const { validateAuth } = require('../helpers/validator-handler');
 
 const router = require("express-promise-router")();
 
-router.get('/list-type', validateAuth, authUser, TrackTypeController.getlist);
-router.get('/type', validateAuth, authUser, TrackTypeController.getone);
+router.get('/list-type', TrackTypeController.getlist);
+router.get('/type', TrackTypeController.getone);
 router.post('/create', validateAuth, authModer, TrackTypeController.create);
 router.post('/delete/:typeID', validateAuth, authModer, TrackTypeController.delete);
 router.post('/update/:typeID', validateAuth, authModer, TrackTypeController.modify);
