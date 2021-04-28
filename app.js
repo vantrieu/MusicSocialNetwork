@@ -50,6 +50,7 @@ const commentRoute = require('./routes/comment');
 const historyRoute = require('./routes/history');
 const { generatedb } = require('./constants/generatedb');
 const tracktypeRoute = require('./routes/tracktype');
+const singerRoute = require('./routes/singer');
 
 //Routes
 app.use('/accounts', accountRoute);
@@ -59,6 +60,7 @@ app.use('/playlists', playlistRoute);
 app.use('/comments', commentRoute);
 app.use('/histories', historyRoute);
 app.use('/tracktypes', tracktypeRoute);
+app.use('/singers', singerRoute);
 
 //Connect mongodb
 mongoose.connect(

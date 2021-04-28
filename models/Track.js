@@ -26,8 +26,13 @@ const trackSchema = mongoose.Schema({
         required: true,
         default: 0
     },
-    tracktype_id: {
-        type: mongoose.SchemaTypes.ObjectId
+    tracktype: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'TrackType'
+    },
+    singer: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Singer'
     },
     comments: [{
         type: mongoose.SchemaTypes.ObjectId,

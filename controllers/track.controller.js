@@ -5,6 +5,7 @@ const mediaserver = require('mediaserver');
 const path = require("path");
 const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
+const buildMetaHandler = require('../helpers/build-meta-handler');
 const History = require('../models/History');
 
 exports.createTrack = async function (req, res) {
@@ -117,6 +118,20 @@ exports.topmusic = async function (req, res) {
         item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
     })
     return responsehandler(res, 200, 'Successfully', tracks, null)
+}
+
+exports.listmusic = async function (req, res) {
+    var options = {
+        select: '_id total tracklink trackname description background',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20
+    };
+    const listTrack = await Track.paginate({}, options);
+    listTrack.docs.forEach(function (item) {
+        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+    })
+    var meta = buildMetaHandler(listTrack);
+    return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
 }
 
 exports.findbyname = async function (req, res) {
