@@ -45,3 +45,8 @@ exports.modify = async function (req, res) {
     tracktype._doc.updatedAt = moment(tracktype._doc.updatedAt).format('DD/MM/YYYY');
     responsehandler(res, 200, 'Successfully', tracktype, null);
 }
+
+exports.getListOption = async function (req, res) {
+    let tracktypes = await TrackType.find({ isDelete: { "$ne": 1 } }, ['_id', 'typename']);
+    responsehandler(res, 200, 'Successfully', tracktypes, null);
+}

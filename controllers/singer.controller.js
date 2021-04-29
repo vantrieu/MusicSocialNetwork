@@ -63,3 +63,8 @@ exports.getList = async function (req, res) {
     }
     return responsehandler(res, 200, 'Successfully', singers, null);
 }
+
+exports.getListOption = async function (req, res) {
+    var singers = await Singer.find({}, ['_id', 'name']);
+    return responsehandler(res, 200, 'Successfully', singers, null);
+}

@@ -86,7 +86,7 @@ exports.updateTrack = async function (req, res) {
 exports.deleteTrack = async function (req, res) {
     const id = req.params.trackID;
     const track = await Track.findById(id);
-    if(track){
+    if (track) {
         await Track.deleteOne(track);
         await removeFile(`./public${track.background}`);
         await removeFile(track.tracklink);
@@ -144,13 +144,15 @@ exports.topmusic = async function (req, res) {
 
 exports.listmusic = async function (req, res) {
     var options = {
-        select: '_id total tracklink trackname description background',
+        select: '_id total tracklink trackname description background singer tracktype',
         page: parseInt(req.query.page) || 1,
-        limit: parseInt(req.query.limit) || 20
+        limit: parseInt(req.query.limit) || 20,
+        populate: { path: 'singer tracktype', select: '_id name avatar typename'},
     };
     const listTrack = await Track.paginate({}, options);
+
     listTrack.docs.forEach(function (item) {
-        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
     var meta = buildMetaHandler(listTrack);
     return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
@@ -158,11 +160,24 @@ exports.listmusic = async function (req, res) {
 
 exports.findbyname = async function (req, res) {
     let keyword = removeVietnameseTones(req.body.trackname);
-    const tracks = await Track.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
-    tracks.forEach(function (item) {
-        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+    var options = {
+        select: '_id total tracklink trackname description background singer tracktype',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        populate: { path: 'singer tracktype', select: '_id name avatar typename'},
+    };
+    //const tracks = await Track.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
+    // tracks.forEach(function (item) {
+    //     item._doc.tracklink = '/tracks/play/' + item._doc._id;
+    // })
+    // return responsehandler(res, 200, 'Successfully', tracks, null);
+    const listTrack = await Track.paginate({ namenosign: { $regex: '.*' + keyword + '.*' } }, options);
+
+    listTrack.docs.forEach(function (item) {
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
-    return responsehandler(res, 200, 'Successfully', tracks, null);
+    var meta = buildMetaHandler(listTrack);
+    return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
 }
 
 exports.downloadFile = async function (req, res) {

@@ -7,6 +7,7 @@ const router = require("express-promise-router")();
 
 router.get('/list-type', TrackTypeController.getlist);
 router.get('/type', TrackTypeController.getone);
+router.get('/option', TrackTypeController.getListOption);
 router.post('/create', validateAuth, authModer, TrackTypeController.create);
 router.post('/delete/:typeID', validateAuth, authModer, TrackTypeController.delete);
 router.post('/update/:typeID', validateAuth, authModer, TrackTypeController.modify);
