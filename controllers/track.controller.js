@@ -86,16 +86,15 @@ exports.updateTrack = async function (req, res) {
 exports.deleteTrack = async function (req, res) {
     const id = req.params.trackID;
     const track = await Track.findById(id);
-    // const backGroundFileName = './public/images/' + track.background.split("/")[4];
-    // await Track.deleteOne({ _id: id })
-    //     .then(() => {
-    //         fs.unlinkSync(backGroundFileName);
-    //         fs.unlinkSync('./' + track.tracklink);
-    //         return responsehandler(res, 200, 'Successfully', null, null);
-    //     })
-    //     .catch(() => {
-    //         return responsehandler(res, 404, 'Not Found', null, null);
-    //     })
+    if(track){
+        await Track.deleteOne(track);
+        await removeFile(`./public${track.background}`);
+        await removeFile(track.tracklink);
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    else {
+        return responsehandler(res, 404, 'Not Found', null, null);
+    }
 }
 
 exports.playmusicPrivate = async function (req, res) {
