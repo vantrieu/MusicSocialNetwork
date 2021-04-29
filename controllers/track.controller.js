@@ -7,33 +7,39 @@ const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const buildMetaHandler = require('../helpers/build-meta-handler');
 const History = require('../models/History');
+const Singer = require('../models/Singer');
+const saveImage = require('../services/save-images');
+const saveMusic = require('../services/save-musics');
+const removeFile = require('../services/remove-files');
+const TrackType = require('../models/TrackType');
 
 exports.createTrack = async function (req, res) {
     const track = new Track(req.body);
     track.namenosign = removeVietnameseTones(track.trackname);
-    let background = req.files.background;
-    if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
-        let address = Math.floor(Date.now() / 1000).toString() + background.name;
-        background.mv('./public/images/' + address);
-        track.background = process.env.ENVIROMENT + '/images/' + address;
-    } else {
-        return responsehandler(res, 400, 'Bad request', null, null);
+    let background = req.files?.background;
+    let fileMusic = req.files?.music;
+    if (background) {
+        let path = await saveImage(background);
+        track.background = path;
     }
-    let fileMusic = req.files.music;
-    if (fileMusic.mimetype != 'audio/mpeg') {
-        return responsehandler(res, 400, 'Bad request', null, null);
-    } else {
-        let time = Math.floor(Date.now() / 1000).toString();
-        fileMusic.mv('./musics/' + time + fileMusic.name);
-        track.tracklink = 'musics/' + time + fileMusic.name;
+    if (fileMusic) {
+        let path = await saveMusic(fileMusic);
+        track.tracklink = path;
     }
     await track.save()
         .then(async (track) => {
+            var singer = await Singer.findOne({ _id: track.singer });
+            singer.tracks.push(track._id);
+            var tracktype = await TrackType.findOne({ _id: track.tracktype });
+            tracktype.tracks.push(track._id);
+            await tracktype.save();
+            await singer.save();
             return responsehandler(res, 201, 'Successfully', null, null);
         })
-        .catch(() => {
-            fs.unlinkSync('./public/images/' + address);
-            fs.unlinkSync('./musics/' + fileMusic.name);
+        .catch(async (err) => {
+            await removeFile(`./public${track.background}`);
+            await removeFile(track.tracklink);
+            return responsehandler(res, 400, err, null, null);
         })
 }
 
@@ -45,37 +51,51 @@ exports.updateTrack = async function (req, res) {
     track.namenosign = removeVietnameseTones(track.trackname);
     let background = req.files?.background;
     if (background) {
-        if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
-            let address = Math.floor(Date.now() / 1000).toString() + background.name;
-            console.log(address)
-            background.mv('./public/images/' + address);
-            track.background = process.env.ENVIROMENT + '/images/' + address;
-        } else {
-            return responsehandler(res, 400, 'Bad request', null, null);
-        }
+        let path = await saveImage(background);
+        await removeFile(`./public${track.background}`);
+        track.background = path;
+    }
+    const { singer, tracktype } = req.body;
+    if (singer && track.singer != singer) {
+        let oldSinger = await Singer.findOne({ _id: track.singer });
+        oldSinger.tracks.pull(track._id);
+        await oldSinger.save();
+        let newSinger = await Singer.findById(singer)
+        newSinger.tracks.push(track._id);
+        await newSinger.save();
+        track.singer = singer;
+    }
+    if (tracktype && track.tracktype != tracktype) {
+        let oldTracktype = await TrackType.findOne({ _id: track.tracktype });
+        oldTracktype.tracks.pull(track._id);
+        await oldTracktype.save();
+        let newTracktype = await TrackType.findOne({ _id: tracktype });
+        newTracktype.tracks.push(track._id);
+        await newTracktype.save();
+        track.tracktype = tracktype;
     }
     await track.save()
         .then(() => {
             return responsehandler(res, 200, 'Successfully', null, null);
         })
-        .catch(() => {
-            fs.unlinkSync('./public/images/' + address);
+        .catch((err) => {
+            return responsehandler(res, 500, err, null, null);
         })
 }
 
 exports.deleteTrack = async function (req, res) {
     const id = req.params.trackID;
     const track = await Track.findById(id);
-    const backGroundFileName = './public/images/' + track.background.split("/")[4];
-    await Track.deleteOne({ _id: id })
-        .then(() => {
-            fs.unlinkSync(backGroundFileName);
-            fs.unlinkSync('./' + track.tracklink);
-    return responsehandler(res, 200, 'Successfully', null, null);
-    })
-    .catch(() => {
-        return responsehandler(res, 404, 'Not Found', null, null);
-    })
+    // const backGroundFileName = './public/images/' + track.background.split("/")[4];
+    // await Track.deleteOne({ _id: id })
+    //     .then(() => {
+    //         fs.unlinkSync(backGroundFileName);
+    //         fs.unlinkSync('./' + track.tracklink);
+    //         return responsehandler(res, 200, 'Successfully', null, null);
+    //     })
+    //     .catch(() => {
+    //         return responsehandler(res, 404, 'Not Found', null, null);
+    //     })
 }
 
 exports.playmusicPrivate = async function (req, res) {
@@ -111,11 +131,14 @@ exports.playmusicPublic = async function (req, res) {
 
 exports.topmusic = async function (req, res) {
     let limit = parseInt(req.query.limit) || 100;
-    const tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background'])
+    const tracks = await Track.find({},
+        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype'])
         .sort({ total: -1 })
-        .limit(limit);
+        .limit(limit)
+        .populate('singer', ['_id', 'name', 'avatar'])
+        .populate('tracktype', ['_id', 'typename']);
     tracks.forEach(function (item) {
-        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
     return responsehandler(res, 200, 'Successfully', tracks, null)
 }

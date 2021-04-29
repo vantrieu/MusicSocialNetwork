@@ -11,7 +11,11 @@ const tracktypeSchema = mongoose.Schema({
         required: true,
         enum : [1, 0],
         default: 0
-    }
+    },
+    tracks: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Track'
+    }]
 })
 
 tracktypeSchema.set('timestamps', true);

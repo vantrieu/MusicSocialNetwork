@@ -44,6 +44,12 @@ const trackSchema = mongoose.Schema({
     }]
 })
 
+// trackSchema.pre('deleteOne', async function (next) {
+//     const track = this;
+    
+//     next()
+// })
+
 trackSchema.set('timestamps', true);
 trackSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Track', trackSchema)

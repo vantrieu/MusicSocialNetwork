@@ -18,7 +18,7 @@ require('dotenv/config');
 var corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200,
-    methods: "GET, POST"
+    methods: "GET, POST, PUT, DELETE"
 }
 app.use(cors(corsOptions));
 

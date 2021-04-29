@@ -5,10 +5,6 @@ const playlistSchema = mongoose.Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Track'
     }],
-    user_id: {
-        type: String,
-        required: true
-    },
     playlistname: {
         type: String,
         required: true

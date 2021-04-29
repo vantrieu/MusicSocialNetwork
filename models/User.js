@@ -40,11 +40,7 @@ const userSchema = mongoose.Schema({
     },
     ggid: {
         type: String
-    },
-    playlists: [{
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Playlist'
-    }]
+    }
 })
 
 userSchema.set('timestamps', true);
