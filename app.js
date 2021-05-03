@@ -64,7 +64,7 @@ app.use('/singers', singerRoute);
 
 //Connect mongodb
 mongoose.connect(
-    process.env.DB_CONNECTION_ATLAS, {
+    process.env.DB_CONNECTION, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
