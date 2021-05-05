@@ -38,6 +38,10 @@ const trackSchema = mongoose.Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Singer'
     },
+    album: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Album'
+    },
     comments: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Comment'

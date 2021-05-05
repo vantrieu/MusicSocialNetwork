@@ -42,6 +42,7 @@ app.get('/', function (req, res) {
 })
 
 //Import Routes
+const albumRoute = require('./routes/album');
 const userRoute = require('./routes/user');
 const accountRoute = require('./routes/account');
 const trackRoute = require('./routes/track');
@@ -53,6 +54,7 @@ const tracktypeRoute = require('./routes/tracktype');
 const singerRoute = require('./routes/singer');
 
 //Routes
+app.use('/albums', albumRoute);
 app.use('/accounts', accountRoute);
 app.use('/users', userRoute);
 app.use('/tracks', trackRoute);
@@ -102,7 +104,7 @@ cron.schedule('0 0 0 * * *', () => {
 
 //Catch 404 Errors and forward them to error handler
 app.use((req, res, next) => {
-    const err = new Error('Not found');
+    const err = new Error('Not Found!');
     err.status = 404;
     next(err);
 });
@@ -111,10 +113,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     const error = app.get('env') === 'development' ? err : {};
     const status = err.status || 500;
-    //return responsehandler(res, status, error.message, null, null);
-    return res.status(status).json({
-        error: error.message
-    })
+    return responsehandler(res, status, error.message, null, null);
 });
 
 //Start listening to the server
