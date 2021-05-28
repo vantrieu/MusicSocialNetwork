@@ -33,34 +33,39 @@ exports.addTrackToPlaylist = async function (req, res) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.detailPlaylist = async function (req, res, next) {
+exports.detailPlaylist = async function (req, res) {
     const playlist_id = req.params.ID;
-    const playlist = await Playlist.findById(playlist_id, ['total','tracks', 'playlistname', 'description', 'background', 'createdAt', '_id']);
+    const playlist = await Playlist.findById(playlist_id, ['total', 'tracks', 'playlistname', 'description', 'background', 'createdAt', '_id']);
     playlist._doc.createdAt = moment(playlist._doc.createdAt).format('DD/MM/YYYY');
-    playlist.total += 1;
-    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']).where('_id').in(playlist._doc.tracks);
+    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer']).where('_id').in(playlist._doc.tracks).populate('singer', ['_id', 'name']);
     tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     });
-    await playlist.save();
     playlist.tracks = tracks;
     playlist.updatedAt = undefined;
     return responsehandler(res, 200, 'Successfully', playlist, null);
 }
 
 exports.listPlaylist = async function (req, res) {
+    let keyword = removeVietnameseTones(req.query.keyword);
+    var query = {
+        namenosign: { $regex: '.*' + keyword + '.*' },
+    };
     var options = {
         select: 'total tracks playlistname description background createdAt _id ',
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
-        populate: { path: 'tracks', select: '_id trackname description tracklink'},
+        populate: { path: 'tracks', select: '_id trackname description tracklink' },
     };
-    let listPlaylist = await Playlist.paginate({}, options);
-
+    if (req.query?.keyword) {
+        var listPlaylist = await Playlist.paginate(query, options);
+    } else {
+        var listPlaylist = await Playlist.paginate({}, options);
+    }
     listPlaylist.docs.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
-    
+
     var meta = buildMetaHandler(listPlaylist);
     return responsehandler(res, 200, 'Successfully', listPlaylist.docs, meta);
 }
@@ -88,10 +93,10 @@ exports.removeTrack = async function (req, res) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.delete = async function(req, res) {
+exports.delete = async function (req, res) {
     const playlistID = req.params.playlistID;
     const playlist = await Playlist.findByIdAndDelete(playlistID);
-    const tracks = await Track.find({_id: { $in: playlist._doc.tracks }})
+    const tracks = await Track.find({ _id: { $in: playlist._doc.tracks } })
     for (const track of tracks) {
         track.playlists.pull(playlistID);
         await track.save();

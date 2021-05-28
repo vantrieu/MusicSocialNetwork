@@ -10,6 +10,7 @@ router.delete('/delete/:trackID', validateAuth, AuthUser, TrackController.delete
 router.get('/play/:trackID', TrackController.playmusicPublic);
 router.get('/top-music', TrackController.topmusic);
 router.get('/list-music', TrackController.listmusic);
+router.get('/option-music/:trackID', TrackController.optionMusic);
 router.get('/find', TrackController.findbyname);
 router.get('/download/:trackname', TrackController.downloadFile);
 
