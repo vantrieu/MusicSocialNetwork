@@ -3,25 +3,24 @@ const removeVietnameseTones = require('../helpers/convertVie-handler');
 const moment = require('moment');
 const Playlist = require('../models/Playlist');
 const Track = require('../models/Track');
+const saveImage = require('../services/save-images');
+const saveMusic = require('../services/save-musics');
+const removeFile = require('../services/remove-files');
+const buildMetaHandler = require('../helpers/build-meta-handler');
 
-exports.createPlaylist = async function (req, res, next) {
-    const user_id = res.locals.account.user_id;
+exports.createPlaylist = async function (req, res) {
     let playlist = new Playlist(req.body);
-    playlist.user_id = user_id;
     playlist.namenosign = removeVietnameseTones(playlist.playlistname);
-    let background = req.files.background;
-    if (background.mimetype == 'image/jpeg' || background.mimetype == 'image/png') {
-        let address = Math.floor(Date.now() / 1000).toString() + background.name;
-        background.mv('./public/images/' + address);
-        playlist.background = process.env.ENVIROMENT + '/images/' + address;
-    } else {
-        return responsehandler(res, 400, 'Bad request', null, null);
+    let background = req.files?.background;
+    if (background) {
+        let path = await saveImage(background);
+        playlist.background = path;
     }
     await playlist.save();
     return responsehandler(res, 200, 'Successfully', playlist, null);
 }
 
-exports.addTrackToPlaylist = async function (req, res, next) {
+exports.addTrackToPlaylist = async function (req, res) {
     const { playlist_id, track_ids } = req.body;
     let playlist = await Playlist.findById(playlist_id);
     for (const track_id of track_ids) {
@@ -34,22 +33,44 @@ exports.addTrackToPlaylist = async function (req, res, next) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.detailPlaylist = async function (req, res, next) {
+exports.detailPlaylist = async function (req, res) {
     const playlist_id = req.params.ID;
-    const playlist = await Playlist.findById(playlist_id, ['total','tracks', 'playlistname', 'description', 'background', 'createdAt', '_id']);
+    const playlist = await Playlist.findById(playlist_id, ['total', 'tracks', 'playlistname', 'description', 'background', 'createdAt', '_id']);
     playlist._doc.createdAt = moment(playlist._doc.createdAt).format('DD/MM/YYYY');
-    playlist.total += 1;
-    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']).where('_id').in(playlist._doc.tracks);
+    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer']).where('_id').in(playlist._doc.tracks).populate('singer', ['_id', 'name']);
     tracks.forEach(function (item) {
-        item._doc.tracklink = process.env.ENVIROMENT + '/tracks/play/' + item._doc._id;
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
     });
-    await playlist.save();
     playlist.tracks = tracks;
     playlist.updatedAt = undefined;
     return responsehandler(res, 200, 'Successfully', playlist, null);
 }
 
-exports.delete = async function (req, res, next) {
+exports.listPlaylist = async function (req, res) {
+    let keyword = removeVietnameseTones(req.query.keyword);
+    var query = {
+        namenosign: { $regex: '.*' + keyword + '.*' },
+    };
+    var options = {
+        select: 'total tracks playlistname description background createdAt _id ',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        populate: { path: 'tracks', select: '_id trackname description tracklink' },
+    };
+    if (req.query?.keyword) {
+        var listPlaylist = await Playlist.paginate(query, options);
+    } else {
+        var listPlaylist = await Playlist.paginate({}, options);
+    }
+    listPlaylist.docs.forEach(function (item) {
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
+    })
+
+    var meta = buildMetaHandler(listPlaylist);
+    return responsehandler(res, 200, 'Successfully', listPlaylist.docs, meta);
+}
+
+exports.delete = async function (req, res) {
     const playlist_id = req.params.ID;
     const track_ids = await Playlist.findOneAndDelete(playlist_id, ['tracks']);
     for (const track_id of track_ids.tracks) {
@@ -60,7 +81,7 @@ exports.delete = async function (req, res, next) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.removeTrack = async function (req, res, next) {
+exports.removeTrack = async function (req, res) {
     let track_id = req.body.track_id;
     let playlist_id = req.body.playlist_id;
     let playlist = await Playlist.findById(playlist_id);
@@ -72,10 +93,10 @@ exports.removeTrack = async function (req, res, next) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.delete = async function(req, res) {
+exports.delete = async function (req, res) {
     const playlistID = req.params.playlistID;
     const playlist = await Playlist.findByIdAndDelete(playlistID);
-    const tracks = await Track.find({_id: { $in: playlist._doc.tracks }})
+    const tracks = await Track.find({ _id: { $in: playlist._doc.tracks } })
     for (const track of tracks) {
         track.playlists.pull(playlistID);
         await track.save();

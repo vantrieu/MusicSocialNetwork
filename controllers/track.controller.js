@@ -12,6 +12,7 @@ const saveImage = require('../services/save-images');
 const saveMusic = require('../services/save-musics');
 const removeFile = require('../services/remove-files');
 const TrackType = require('../models/TrackType');
+const Playlist = require('../models/Playlist');
 
 exports.createTrack = async function (req, res) {
     const track = new Track(req.body);
@@ -147,9 +148,60 @@ exports.listmusic = async function (req, res) {
         select: '_id total tracklink trackname description background singer tracktype',
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
-        populate: { path: 'singer tracktype', select: '_id name avatar typename'},
+        populate: { path: 'singer tracktype', select: '_id name avatar typename' },
     };
-    const listTrack = await Track.paginate({}, options);
+    if (req.query?.keyword) {
+        let keyword = removeVietnameseTones(req.query.keyword);
+        var query = {
+            namenosign: { $regex: '.*' + keyword + '.*' },
+        };
+        var listTrack = await Track.paginate(query, options);
+    } else {
+        var listTrack = await Track.paginate({}, options);
+    }
+
+    listTrack.docs.forEach(function (item) {
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
+    })
+    var meta = buildMetaHandler(listTrack);
+    return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
+}
+
+exports.optionMusic = async function (req, res) {
+    const id = req.params.trackID;
+    const { tracks } = await Playlist.findById(id, ['tracks']);
+    console.log(tracks)
+    var options = {
+        select: '_id total tracklink trackname description background singer tracktype',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        populate: { path: 'singer tracktype', select: '_id name avatar typename' },
+    };
+    if (req.query?.keyword) {
+        let keyword = removeVietnameseTones(req.query.keyword);
+        if (tracks.length === 0) {
+            var query = {
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        } else {
+            var query = {
+                _id: { $ne: tracks },
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        }
+
+    } else {
+        if (tracks.length === 0) {
+            var listTrack = await Track.paginate({}, options);
+        } else {
+            var query = {
+                _id: { $ne: tracks }
+            };
+            var listTrack = await Track.paginate(query, options);
+        }
+    }
 
     listTrack.docs.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
@@ -164,7 +216,7 @@ exports.findbyname = async function (req, res) {
         select: '_id total tracklink trackname description background singer tracktype',
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
-        populate: { path: 'singer tracktype', select: '_id name avatar typename'},
+        populate: { path: 'singer tracktype', select: '_id name avatar typename' },
     };
     //const tracks = await Track.find({ namenosign: { $regex: '.*' + keyword + '.*' } }, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
     // tracks.forEach(function (item) {
