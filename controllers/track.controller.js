@@ -179,11 +179,19 @@ exports.optionMusic = async function (req, res) {
     };
     if (req.query?.keyword) {
         let keyword = removeVietnameseTones(req.query.keyword);
-        var query = {
-            _id: { $ne: tracks },
-            namenosign: { $regex: '.*' + keyword + '.*' },
-        };
-        var listTrack = await Track.paginate(query, options);
+        if (tracks.length === 0) {
+            var query = {
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        } else {
+            var query = {
+                _id: { $ne: tracks },
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        }
+
     } else {
         if (tracks.length === 0) {
             var listTrack = await Track.paginate({}, options);
@@ -192,7 +200,7 @@ exports.optionMusic = async function (req, res) {
                 _id: { $ne: tracks }
             };
             var listTrack = await Track.paginate(query, options);
-        } 
+        }
     }
 
     listTrack.docs.forEach(function (item) {
