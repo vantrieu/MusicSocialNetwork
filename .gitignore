@@ -62,7 +62,7 @@ typings/
 
 # file store local
 musics/
-public/
+public/images/
 
 
 # End of https://www.gitignore.io/api/node
