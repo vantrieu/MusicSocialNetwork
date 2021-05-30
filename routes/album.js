@@ -8,6 +8,7 @@ router.post('/', validateAuth, authModer, albumController.createAlbum);
 router.put('/:albumId', validateAuth, authModer, albumController.updateAlbum);
 router.get('/detail/:albumId', albumController.detailAlbum);
 router.get('/top-trend', albumController.topAlbum);
+router.get('/', albumController.listAlbum);
 router.delete('/delete/:albumId', albumController.delete);
 
 module.exports = router;

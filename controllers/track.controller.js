@@ -170,7 +170,6 @@ exports.listmusic = async function (req, res) {
 exports.optionMusic = async function (req, res) {
     const id = req.params.trackID;
     const { tracks } = await Playlist.findById(id, ['tracks']);
-    console.log(tracks)
     var options = {
         select: '_id total tracklink trackname description background singer tracktype',
         page: parseInt(req.query.page) || 1,
@@ -186,7 +185,7 @@ exports.optionMusic = async function (req, res) {
             var listTrack = await Track.paginate(query, options);
         } else {
             var query = {
-                _id: { $ne: tracks },
+                _id: { $nin: tracks },
                 namenosign: { $regex: '.*' + keyword + '.*' },
             };
             var listTrack = await Track.paginate(query, options);
@@ -197,7 +196,7 @@ exports.optionMusic = async function (req, res) {
             var listTrack = await Track.paginate({}, options);
         } else {
             var query = {
-                _id: { $ne: tracks }
+                _id: { $nin: tracks }
             };
             var listTrack = await Track.paginate(query, options);
         }

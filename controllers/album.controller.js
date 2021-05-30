@@ -5,6 +5,7 @@ const Track = require('../models/Track');
 const Singer = require('../models/Singer');
 const saveImage = require('../services/save-images');
 const removeFile = require('../services/remove-files');
+const buildMetaHandler = require('../helpers/build-meta-handler');
 
 exports.createAlbum = async function (req, res) {
     let album = new Album(req.body);
@@ -96,6 +97,27 @@ exports.delete = async function (req, res) {
         await singer.save();
     });
     responsehandler(res, 200, 'Successfully', null, null);
+}
+
+exports.listAlbum = async function (req, res) {
+    var options = {
+        select: '_id albumname description background createdAt updatedAt',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        // populate: { path: 'singer tracktype', select: '_id name avatar typename' },
+    };
+    if (req.query?.keyword) {
+        let keyword = removeVietnameseTones(req.query.keyword);
+        var query = {
+            namenosign: { $regex: '.*' + keyword + '.*' },
+        };
+        var listAlbum = await Album.paginate(query, options);
+    } else {
+        var listAlbum = await Album.paginate({}, options);
+    }
+
+    var meta = buildMetaHandler(listAlbum);
+    return responsehandler(res, 200, 'Successfully', listAlbum.docs, meta);
 }
 
 // exports.detail = async function (req, res, next) {
