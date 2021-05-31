@@ -13,6 +13,7 @@ const saveMusic = require('../services/save-musics');
 const removeFile = require('../services/remove-files');
 const TrackType = require('../models/TrackType');
 const Playlist = require('../models/Playlist');
+const Album = require('../models/Album');
 
 exports.createTrack = async function (req, res) {
     const track = new Track(req.body);
@@ -170,6 +171,48 @@ exports.listmusic = async function (req, res) {
 exports.optionMusic = async function (req, res) {
     const id = req.params.trackID;
     const { tracks } = await Playlist.findById(id, ['tracks']);
+    var options = {
+        select: '_id total tracklink trackname description background singer tracktype',
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20,
+        populate: { path: 'singer tracktype', select: '_id name avatar typename' },
+    };
+    if (req.query?.keyword) {
+        let keyword = removeVietnameseTones(req.query.keyword);
+        if (tracks.length === 0) {
+            var query = {
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        } else {
+            var query = {
+                _id: { $nin: tracks },
+                namenosign: { $regex: '.*' + keyword + '.*' },
+            };
+            var listTrack = await Track.paginate(query, options);
+        }
+
+    } else {
+        if (tracks.length === 0) {
+            var listTrack = await Track.paginate({}, options);
+        } else {
+            var query = {
+                _id: { $nin: tracks }
+            };
+            var listTrack = await Track.paginate(query, options);
+        }
+    }
+
+    listTrack.docs.forEach(function (item) {
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
+    })
+    var meta = buildMetaHandler(listTrack);
+    return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
+}
+
+exports.optionAlbum = async function (req, res) {
+    const id = req.params.trackID;
+    const { tracks } = await Album.findById(id, ['tracks']);
     var options = {
         select: '_id total tracklink trackname description background singer tracktype',
         page: parseInt(req.query.page) || 1,

@@ -11,6 +11,7 @@ router.get('/play/:trackID', TrackController.playmusicPublic);
 router.get('/top-music', TrackController.topmusic);
 router.get('/list-music', TrackController.listmusic);
 router.get('/option-music/:trackID', TrackController.optionMusic);
+router.get('/option/:trackID', TrackController.optionAlbum);
 router.get('/find', TrackController.findbyname);
 router.get('/download/:trackname', TrackController.downloadFile);
 

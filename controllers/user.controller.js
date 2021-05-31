@@ -14,7 +14,7 @@ exports.me = function (req, res, next) {
             next(err);
         else {
             user._doc.birthday = moment(user._doc.birthday).format('DD/MM/YYYY');
-            user.avatar = process.env.ENVIROMENT + user.avatar;
+            user.avatar = user.avatar;
             return responsehandler(res, 200, 'Successfully', user, null);
         }
     });
