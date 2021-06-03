@@ -215,6 +215,7 @@ exports.optionAlbum = async function (req, res) {
     const { tracks } = await Album.findById(id, ['tracks']);
     var options = {
         select: '_id total tracklink trackname description background singer tracktype',
+        sort: 'trackname 1',
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
         populate: { path: 'singer tracktype', select: '_id name avatar typename' },
@@ -224,22 +225,28 @@ exports.optionAlbum = async function (req, res) {
         if (tracks.length === 0) {
             var query = {
                 namenosign: { $regex: '.*' + keyword + '.*' },
+                album: { $in: null }
             };
             var listTrack = await Track.paginate(query, options);
         } else {
             var query = {
                 _id: { $nin: tracks },
                 namenosign: { $regex: '.*' + keyword + '.*' },
+                album: { $in: null }
             };
             var listTrack = await Track.paginate(query, options);
         }
 
     } else {
         if (tracks.length === 0) {
-            var listTrack = await Track.paginate({}, options);
+            var query = {
+                album: { $in: null }
+            };
+            var listTrack = await Track.paginate(query, options);
         } else {
             var query = {
-                _id: { $nin: tracks }
+                _id: { $nin: tracks },
+                album: { $in: null }
             };
             var listTrack = await Track.paginate(query, options);
         }

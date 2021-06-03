@@ -72,12 +72,12 @@ exports.detailAlbum = async function (req, res) {
         _id: album_id
     }, ['_id', 'total', 'albumname', 'description', 'background', 'tracks', 'singers', 'createdAt'])
         .populate('singers', ['_id', 'name'])
-    console.log(album.tracks)
     //.populate('tracks', ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
     let tracks = await Track.find({},
         ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer'])
         .where('_id').in(album.tracks)
-        .populate('singer', ['_id', 'name']);
+        .populate('singer', ['_id', 'name'])
+        .sort('trackname 1');
     album.tracks = tracks;
     album.tracks.forEach(function (item) {
         item.tracklink = '/tracks/play/' + item._id;
@@ -126,6 +126,32 @@ exports.listAlbum = async function (req, res) {
     return responsehandler(res, 200, 'Successfully', listAlbum.docs, meta);
 }
 
+exports.addtracktoalbum = async function (req, res) {
+    let track_id = req.body.track_id;
+    let album_id = req.body.album_id;
+    let album = await Album.findById(album_id);
+    album.tracks.push(track_id);
+    Track.findById(track_id)
+        .then(async track => {
+            track.album = album_id;
+            await track.save()
+        });
+    await album.save();
+    return responsehandler(res, 201, 'Successfully', null, null);
+}
+
+exports.movetracktoalbum = async function (req, res) {
+    let track_id = req.body.track_id;
+    let album_id = req.body.album_id;
+    let album = await Album.findById(album_id);
+    album.tracks.pull(track_id);
+    await album.save();
+    let track = await Track.findById(track_id);
+    track.album = null;
+    await track.save();
+    return responsehandler(res, 200, 'Successfully', null, null);
+}
+
 // exports.detail = async function (req, res, next) {
 //     let album_id = req.params.albumID;
 //     let album = await Album.findOne({ _id: album_id }, ['_id', 'total', 'albumname', 'description', 'background', 'tracks']);
@@ -140,36 +166,13 @@ exports.listAlbum = async function (req, res) {
 // }
 
 
-// exports.addtracktoalbum = async function (req, res, next) {
-//     let tracks = req.body.tracks;
-//     let album_id = req.body.album_id;
-//     let album = await Album.findById(album_id);
-//     tracks.forEach(element => {
-//         album.tracks.push(element);
-//         Track.findById({ _id: element })
-//             .then(track => {
-//                 track.album_id = album_id;
-//                 track.save()
-//             })
-//     });
-//     await album.save();
-//     return responsehandler(res, 200, 'Successfully', null, null);
-// }
-
 // exports.topalbum = async function (req, res, next) {
 //     let albums = await Album.find({}, ['_id', 'total', 'albumname', 'description', 'background'])
 //         .sort({ total: -1 }).limit(15);
 //     return responsehandler(res, 200, 'Successfully', albums, null);
 // }
 
-// exports.movetracktoalbum = async function (req, res, next) {
-//     let track_id = req.body.track_id;
-//     let album_id = req.body.album_id;
-//     let album = await Album.findById(album_id);
-//     album.tracks.pull(track_id);
-//     await album.save();
-//     return responsehandler(res, 200, 'Successfully', null, null);
-// }
+
 
 // exports.find = async function (req, res, next) {
 //     let keyword = removeVietnameseTones(req.body.trackname);

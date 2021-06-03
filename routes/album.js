@@ -4,11 +4,13 @@ const { validateAuth } = require('../helpers/validator-handler');
 
 var router = require("express-promise-router")();
 
+router.put('/remove-track', validateAuth, authModer, albumController.movetracktoalbum);
 router.post('/', validateAuth, authModer, albumController.createAlbum);
 router.put('/:albumId', validateAuth, authModer, albumController.updateAlbum);
 router.get('/detail/:albumId', albumController.detailAlbum);
 router.get('/top-trend', albumController.topAlbum);
 router.get('/', albumController.listAlbum);
-router.delete('/delete/:albumId', albumController.delete);
+router.delete('/delete/:albumId', validateAuth, authModer, albumController.delete);
+router.post('/add-track', validateAuth, authModer, albumController.addtracktoalbum);
 
 module.exports = router;
