@@ -37,7 +37,10 @@ exports.detailPlaylist = async function (req, res) {
     const playlist_id = req.params.ID;
     const playlist = await Playlist.findById(playlist_id, ['total', 'tracks', 'playlistname', 'description', 'background', 'createdAt', '_id']);
     playlist._doc.createdAt = moment(playlist._doc.createdAt).format('DD/MM/YYYY');
-    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer']).where('_id').in(playlist._doc.tracks).populate('singer', ['_id', 'name']);
+    let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer'])
+        .where('_id').in(playlist._doc.tracks)
+        .populate('singer', ['_id', 'name'])
+        .sort({trackname: 1});
     tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     });

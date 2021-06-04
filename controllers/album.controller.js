@@ -92,17 +92,23 @@ exports.topAlbum = async function (req, res) {
 exports.delete = async function (req, res) {
     let albumId = req.params.albumId;
     let album = await Album.findByIdAndDelete(albumId);
-    const tracks = await Track.find({ album: album._id });
-    tracks.forEach(async track => {
-        track.album = null;
-        await track.save();
-    })
-    album.singers.forEach(async element => {
-        let singer = await Singer.findOne({ _id: element });
-        singer.albums.pull(element);
-        await singer.save();
-    });
-    responsehandler(res, 200, 'Successfully', null, null);
+    if (album) {
+        const tracks = await Track.find({ album: album._id });
+        if (tracks) {
+            tracks.forEach(async track => {
+                track.album = null;
+                await track.save();
+            });
+        }
+        album.singers.forEach(async element => {
+            let singer = await Singer.findOne({ _id: element });
+            singer.albums.pull(element);
+            await singer.save();
+        });
+        await removeFile(`./public${album.background}`);
+        responsehandler(res, 200, 'Successfully', null, null);
+    }
+    responsehandler(res, 400, 'Not Found!', null, null);
 }
 
 exports.listAlbum = async function (req, res) {

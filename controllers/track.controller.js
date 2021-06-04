@@ -173,6 +173,7 @@ exports.optionMusic = async function (req, res) {
     const { tracks } = await Playlist.findById(id, ['tracks']);
     var options = {
         select: '_id total tracklink trackname description background singer tracktype',
+        sort: 'trackname 1',
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
         populate: { path: 'singer tracktype', select: '_id name avatar typename' },
