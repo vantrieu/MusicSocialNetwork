@@ -40,7 +40,7 @@ exports.detailPlaylist = async function (req, res) {
     let tracks = await Track.find({}, ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer'])
         .where('_id').in(playlist._doc.tracks)
         .populate('singer', ['_id', 'name'])
-        .sort({trackname: 1});
+        .sort({ trackname: 1 });
     tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     });
@@ -75,11 +75,14 @@ exports.listPlaylist = async function (req, res) {
 
 exports.delete = async function (req, res) {
     const playlist_id = req.params.ID;
-    const track_ids = await Playlist.findOneAndDelete(playlist_id, ['tracks']);
-    for (const track_id of track_ids.tracks) {
-        let track = await Track.findById(track_id);
-        track.playlists.pull(playlist_id);
-        await track.save();
+    const track = await Playlist.findByIdAndDelete(playlist_id, ['tracks', 'background']);
+    if (track) {
+        track.tracks.map(async (id) => {
+            let track = await Track.findById(id);
+            track.playlists.pull(playlist_id);
+            await track.save();
+        });
+        await removeFile(`./public${track.background}`);
     }
     return responsehandler(res, 200, 'Successfully', null, null);
 }
@@ -96,13 +99,13 @@ exports.removeTrack = async function (req, res) {
     return responsehandler(res, 200, 'Successfully', null, null);
 }
 
-exports.delete = async function (req, res) {
-    const playlistID = req.params.playlistID;
-    const playlist = await Playlist.findByIdAndDelete(playlistID);
-    const tracks = await Track.find({ _id: { $in: playlist._doc.tracks } })
-    for (const track of tracks) {
-        track.playlists.pull(playlistID);
-        await track.save();
-    }
-    return responsehandler(res, 200, 'Successfully', [], null);
-}
+// exports.delete = async function (req, res) {
+//     const playlistID = req.params.playlistID;
+//     const playlist = await Playlist.findByIdAndDelete(playlistID);
+//     const tracks = await Track.find({ _id: { $in: playlist._doc.tracks } })
+//     for (const track of tracks) {
+//         track.playlists.pull(playlistID);
+//         await track.save();
+//     }
+//     return responsehandler(res, 200, 'Successfully', [], null);
+// }
