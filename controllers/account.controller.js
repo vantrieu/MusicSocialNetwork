@@ -309,34 +309,26 @@ exports.findAccount = async function (req, res) {
     return responsehandler(res, 200, 'Successfully', accounts.docs, meta);
 }
 
-exports.lockaccount = function (req, res, next) {
+exports.lockaccount = async function (req, res, next) {
     let user_id = req.body.id;
-    Account.findOne({ _id: user_id }, function (err, account) {
-        if (err)
-            next(err);
-        else {
-            account.islock = 1;
-            account.save();
-            account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
-            return responsehandler(res, 200, 'Successfully', accNoField, null);
-        }
-    });
+    let account = await Account.findById(user_id);
+    if(account){
+        account.islock = 1;
+        await account.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Not Found', accNoField, null);
 }
 
-exports.unlockaccount = function (req, res, next) {
+exports.unlockaccount = async function (req, res, next) {
     let user_id = req.body.id;
-    Account.findOne({ _id: user_id }, function (err, account) {
-        if (err)
-            next(err);
-        else {
-            account.islock = 0;
-            account.save();
-            account._doc.createdAt = moment(account._doc.createdAt).format('DD/MM/YYYY');
-            const { __v, password, user_id, role, updatedAt, ...accNoField } = account._doc;
-            return responsehandler(res, 200, 'Successfully', accNoField, null);
-        }
-    });
+    let account = await Account.findById(user_id);
+    if(account){
+        account.islock = 0;
+        await account.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Not Found', null, null);
 }
 
 exports.loginFacebook = async function (req, res) {

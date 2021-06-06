@@ -20,7 +20,7 @@ router.get('/list-account', validateAuth, authModer, accountController.getlistac
 router.get('/list-moderator', validateAuth, authModer, accountController.getlistmoderator);
 router.get('/find/:username', validateAuth, authUser, accountController.findAccount);
 router.post('/lock-account', validateAuth, authModer, accountController.lockaccount);
-router.post('/unlock-account', validateAuth, authModer, accountController.unlockaccount);
+router.post('/un-lock-account', validateAuth, authModer, accountController.unlockaccount);
 router.post('/login-facebook', accountController.loginFacebook);
 router.post('/login-google', accountController.loginGoogle);
 router.post('/delete-moderator', validateAuth, authAdmin, accountController.deleteModerator);
