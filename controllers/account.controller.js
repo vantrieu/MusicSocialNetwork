@@ -256,11 +256,19 @@ exports.registermoderator = function (req, res, next) {
 }
 
 exports.getlistaccount = async function (req, res) {
-    var query = {
-        //role: { "$ne": 'Administrator' }
-        role: 'User',
-        isDelete: { "$ne": 1 }
-    };
+    let keyword = req.query?.keyword;
+    if (keyword) {
+        var query = {
+            role: 'User',
+            isDelete: { "$ne": 1 },
+            username: { $regex: '.*' + keyword + '.*' }
+        };
+    } else {
+        var query = {
+            role: 'User',
+            isDelete: { "$ne": 1 }
+        };
+    }
     var options = {
         select: 'islock _id username email phonenumber createdAt',
         page: parseInt(req.query.page) || 1,
@@ -275,10 +283,19 @@ exports.getlistaccount = async function (req, res) {
 }
 
 exports.getlistmoderator = async function (req, res) {
-    var query = {
-        role: 'Moderator',
-        isDelete: { "$ne": 1 }
-    };
+    let keyword = req.query?.keyword;
+    if (keyword) {
+        var query = {
+            role: 'Moderator',
+            isDelete: { "$ne": 1 },
+            username: { $regex: '.*' + keyword + '.*' }
+        };
+    } else {
+        var query = {
+            role: 'Moderator',
+            isDelete: { "$ne": 1 }
+        };
+    }
     var options = {
         select: 'islock _id username email phonenumber createdAt',
         page: parseInt(req.query.page) || 1,
@@ -312,7 +329,7 @@ exports.findAccount = async function (req, res) {
 exports.lockaccount = async function (req, res, next) {
     let user_id = req.body.id;
     let account = await Account.findById(user_id);
-    if(account){
+    if (account) {
         account.islock = 1;
         await account.save();
         return responsehandler(res, 200, 'Successfully', null, null);
@@ -323,7 +340,7 @@ exports.lockaccount = async function (req, res, next) {
 exports.unlockaccount = async function (req, res, next) {
     let user_id = req.body.id;
     let account = await Account.findById(user_id);
-    if(account){
+    if (account) {
         account.islock = 0;
         await account.save();
         return responsehandler(res, 200, 'Successfully', null, null);
