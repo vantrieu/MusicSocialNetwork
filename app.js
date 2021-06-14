@@ -103,9 +103,9 @@ cron.schedule('0 0 0 * * *', () => {
     });
 });
 
-cron.schedule('0 0 * * * *', () => {
-    cronjob.CalculatorAlbum();
-});
+// cron.schedule('0 0 * * * *', () => {
+//     cronjob.CalculatorAlbum();
+// });
 
 //Catch 404 Errors and forward them to error handler
 app.use((req, res, next) => {
