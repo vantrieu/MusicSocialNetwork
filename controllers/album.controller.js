@@ -86,7 +86,9 @@ exports.detailAlbum = async function (req, res) {
 }
 
 exports.topAlbum = async function (req, res) {
-    return responsehandler(res, 200, 'Chưa đủ dữ liệu để làm!', null, null);
+    let albums = await Album.find({}, ['_id', 'total', 'albumname', 'description', 'background'])
+        .sort({ total: -1, createdAt: -1}).limit(15);
+    return responsehandler(res, 200, 'Successfully', albums, null);
 }
 
 exports.delete = async function (req, res) {

@@ -23,6 +23,10 @@ const albumSchema = mongoose.Schema({
     }],
     description: {
         type: String
+    },
+    total: {
+        type: Number,
+        default: 0
     }
 });
 

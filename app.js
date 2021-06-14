@@ -12,6 +12,7 @@ const responsehandler = require('./helpers/respone-handler');
 const removeVietnameseTones = require('./helpers/convertVie-handler');
 const cron = require('node-cron'), spawn = require('child_process').spawn;
 const driveApi = require('./controllers/driveapi.controller');
+const cronjob = require('./constants/cronjob');
 require('dotenv/config');
 
 // CORS config
@@ -100,6 +101,10 @@ cron.schedule('0 0 0 * * *', () => {
         }
             
     });
+});
+
+cron.schedule('0 0 * * * *', () => {
+    cronjob.CalculatorAlbum();
 });
 
 //Catch 404 Errors and forward them to error handler
