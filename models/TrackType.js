@@ -15,7 +15,12 @@ const tracktypeSchema = mongoose.Schema({
     tracks: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Track'
-    }]
+    }],
+    background: {
+        type: String,
+        required: true,
+        default: "/images/unavailable.jpg"
+    },
 })
 
 tracktypeSchema.set('timestamps', true);

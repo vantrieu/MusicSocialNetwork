@@ -1,9 +1,16 @@
 const moment = require('moment');
 const responsehandler = require('../helpers/respone-handler');
 const TrackType = require('../models/TrackType');
+const saveImage = require('../services/save-images');
+const removeFile = require('../services/remove-files');
 
 exports.create = async function (req, res) {
     let tracktype = new TrackType(req.body);
+    let background = req.files?.background;
+    if (background) {
+        let path = await saveImage(background);
+        tracktype.background = path;
+    }
     await tracktype.save();
     tracktype._doc.createdAt = moment(tracktype._doc.createdAt).format('DD/MM/YYYY');
     let { __v, updatedAt, isDelete, ...typeNoField } = tracktype._doc;
@@ -21,7 +28,7 @@ exports.delete = async function (req, res) {
 }
 
 exports.getlist = async function (req, res) {
-    let tracktypes = await TrackType.find({ isDelete: { "$ne": 1 } }, ['_id', 'typename', 'createdAt', 'updatedAt']);
+    let tracktypes = await TrackType.find({ isDelete: { "$ne": 1 } }, ['_id', 'typename', 'background', 'createdAt', 'updatedAt']);
     tracktypes.forEach(function (item) {
         item._doc.createdAt = moment(item._doc.createdAt).format('DD/MM/YYYY');
         item._doc.updatedAt = moment(item._doc.updatedAt).format('DD/MM/YYYY');
