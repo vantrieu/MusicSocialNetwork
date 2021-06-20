@@ -5,7 +5,9 @@ const fs = require('fs');
 const responsehandler = require('../helpers/respone-handler');
 const removeVietnameseTones = require('../helpers/convertVie-handler');
 const buildMetaHandler = require('../helpers/build-meta-handler');
-//const Track = require('../models/Track');
+const Album = require('../models/Album');
+const Track = require('../models/Track');
+const Singer = require('../models/Singer');
 
 exports.me = function (req, res, next) {
     const account = res.locals.account.user_id;
@@ -127,4 +129,100 @@ exports.UpdateProfile = async function (req, res, next) {
     user.namenosign = removeVietnameseTones(temp);
     await user.save();
     return responsehandler(res, 200, 'Successfully', null, null);
+}
+
+exports.likeSinger = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { singerId } = req.params;
+    let user = await User.findById(userId);
+    let singer = await Singer.findById(singerId);
+    if (singer && user) {
+        if(user.singers.includes(singerId) || singer.users.includes(userId))
+            return responsehandler(res, 400, 'Bad Request', null, null);
+        user.singers.push(singerId);
+        singer.users.push(userId);
+        await user.save();
+        await singer.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
+}
+
+exports.likeAlbum = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { albumId } = req.params;
+    let user = await User.findById(userId);
+    let album = await Album.findById(albumId);
+    if (album && user) {
+        if(user.albums.includes(albumId) || album.users.includes(userId))
+            return responsehandler(res, 400, 'Bad Request', null, null);
+        user.albums.push(albumId);
+        album.users.push(userId);
+        await user.save();
+        await album.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
+}
+
+exports.likeTrack = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { trackId } = req.params;
+    let user = await User.findById(userId);
+    let track = await Track.findById(trackId);
+    if (track && user) {
+        if(user.tracks.includes(trackId) || track.users.includes(userId))
+            return responsehandler(res, 400, 'Bad Request', null, null);
+        user.tracks.push(trackId);
+        track.users.push(userId);
+        await user.save();
+        await track.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
+}
+
+exports.unLikeSinger = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { singerId } = req.params;
+    let user = await User.findById(userId);
+    let singer = await Singer.findById(singerId);
+    if (singer && user) {
+        user.singers.pull(singerId);
+        singer.users.pull(userId);
+        await user.save();
+        await singer.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
+}
+
+exports.unLikeAlbum = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { albumId } = req.params;
+    let user = await User.findById(userId);
+    let album = await Album.findById(albumId);
+    if (album && user) {
+        user.albums.pull(albumId);
+        album.users.pull(userId);
+        await user.save();
+        await album.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
+}
+
+exports.unLikeTrack = async function (req, res) {
+    const userId = res.locals.account.user_id;
+    const { trackId } = req.params;
+    let user = await User.findById(userId);
+    let track = await Track.findById(trackId);
+    if (track && user) {
+        user.tracks.pull(trackId);
+        track.users.pull(userId);
+        await user.save();
+        await track.save();
+        return responsehandler(res, 200, 'Successfully', null, null);
+    }
+    return responsehandler(res, 400, 'Bad Request', null, null);
 }

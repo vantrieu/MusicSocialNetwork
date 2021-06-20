@@ -49,6 +49,10 @@ const trackSchema = mongoose.Schema({
     playlists: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Playlist'
+    }],
+    users: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
     }]
 })
 

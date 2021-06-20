@@ -27,7 +27,11 @@ const albumSchema = mongoose.Schema({
     total: {
         type: Number,
         default: 0
-    }
+    },
+    users: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+    }]
 });
 
 albumSchema.plugin(mongoosePaginate);

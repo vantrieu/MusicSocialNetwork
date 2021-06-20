@@ -24,6 +24,10 @@ const singerSchema = mongoose.Schema({
     albums: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Album'
+    }],
+    users: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
     }]
 })
 

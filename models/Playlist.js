@@ -23,7 +23,11 @@ const playlistSchema = mongoose.Schema({
     total: {
         type: Number,
         default: 0
-    }
+    },
+    users: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+    }]
 });
 
 playlistSchema.set('timestamps', true);
