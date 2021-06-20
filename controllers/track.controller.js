@@ -113,9 +113,11 @@ exports.playmusicPrivate = async function (req, res) {
         history.user = user_id;
         history.content = 'Bạn đã nghe bài hát ';
         await history.save();
-        var album = await Album.findById(track.album);
-        album.total += 1;
-        await album.save();
+        if (track.album) {
+            var album = await Album.findById(track.album);
+            album.total += 1;
+            await album.save();
+        }
         return mediaserver.pipe(req, res, link);
     }
     return responsehandler(res, 200, 'Not found', null, null);
@@ -128,9 +130,11 @@ exports.playmusicPublic = async function (req, res) {
         var link = path.join(track.tracklink);
         track.total = track.total + 1;
         await track.save();
-        var album = await Album.findById(track.album);
-        album.total += 1;
-        await album.save();
+        if (track.album) {
+            var album = await Album.findById(track.album);
+            album.total += 1;
+            await album.save();
+        }
         return mediaserver.pipe(req, res, link);
     }
     return responsehandler(res, 200, 'Not found', null, null);
