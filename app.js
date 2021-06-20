@@ -53,6 +53,7 @@ const historyRoute = require('./routes/history');
 const { generatedb } = require('./constants/generatedb');
 const tracktypeRoute = require('./routes/tracktype');
 const singerRoute = require('./routes/singer');
+const findRoute = require('./routes/find');
 
 //Routes
 app.use('/albums', albumRoute);
@@ -64,6 +65,7 @@ app.use('/comments', commentRoute);
 app.use('/histories', historyRoute);
 app.use('/tracktypes', tracktypeRoute);
 app.use('/singers', singerRoute);
+app.use('/finds', findRoute);
 
 //Connect mongodb
 mongoose.connect(
