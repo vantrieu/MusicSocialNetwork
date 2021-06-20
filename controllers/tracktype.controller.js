@@ -87,3 +87,9 @@ exports.getTrackOfType = async function (req, res) {
     var meta = buildMetaHandler(listTrack);
     return responsehandler(res, 200, 'Successfully', listTrack.docs, meta);
 }
+
+exports.getTopTrackTypes = async function (req, res) {
+    let tracktypeIds = await Track.find({}, ['tracktype']).sort({ total: -1}).limit(50).distinct('tracktype');
+    let tracktypes = await TrackType.find({ '_id': { $in: tracktypeIds } }, ['_id', 'typename', 'background', 'createdAt', 'updatedAt']);
+    return responsehandler(res, 200, 'Successfully', tracktypes, null);
+}
