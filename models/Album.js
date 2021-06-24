@@ -31,7 +31,11 @@ const albumSchema = mongoose.Schema({
     users: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User'
-    }]
+    }],
+    totalLike: {
+        type: Number,
+        default: 0
+    }
 });
 
 albumSchema.plugin(mongoosePaginate);

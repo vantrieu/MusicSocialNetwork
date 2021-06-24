@@ -28,7 +28,11 @@ const singerSchema = mongoose.Schema({
     users: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User'
-    }]
+    }],
+    totalLike: {
+        type: Number,
+        default: 0
+    }
 })
 
 singerSchema.set('timestamps', true);

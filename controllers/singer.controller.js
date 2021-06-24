@@ -43,11 +43,13 @@ exports.update = async function (req, res) {
 
 exports.getByID = async function (req, res) {
     let { id } = req.params;
-    let singers = await Singer.findById(id, ['_id', 'name', 'description', 'avatar', 'createdAt', 'updatedAt'])
+    let singers = await Singer.findById(id, ['_id', 'users', 'totalLike', 'name', 'description', 'avatar', 'createdAt', 'updatedAt'])
     .populate('albums tracks', ['_id', 'albumname', 'background', 'tracklink', 'trackname'])
     singers.tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
+    singers.totalLike = singers.users.length;
+    singers.users = undefined;
     return responsehandler(res, 200, 'Successfully', singers, null);
 }
 

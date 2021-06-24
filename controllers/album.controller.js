@@ -70,7 +70,7 @@ exports.detailAlbum = async function (req, res) {
     let album_id = req.params.albumId;
     let album = await Album.findOne({
         _id: album_id
-    }, ['_id', 'total', 'albumname', 'description', 'background', 'tracks', 'singers', 'createdAt'])
+    }, ['_id', 'totalLike', 'total', 'albumname', 'description', 'background', 'tracks', 'users', 'singers', 'createdAt'])
         .populate('singers', ['_id', 'name'])
     //.populate('tracks', ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
     let tracks = await Track.find({},
@@ -79,6 +79,8 @@ exports.detailAlbum = async function (req, res) {
         .populate('singer', ['_id', 'name'])
         .sort('trackname 1');
     album.tracks = tracks;
+    album.totalLike = album.users.length;
+    album.users = undefined;
     album.tracks.forEach(function (item) {
         item.tracklink = '/tracks/play/' + item._id;
     });
