@@ -9,7 +9,8 @@ exports.find = async function (req, res) {
     keyword = removeVietnameseTones(req.query.keyword);
     let tracks = await Track.find(
         { namenosign: { $regex: '.*' + keyword + '.*' } },
-        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype']).limit(limit);
+        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype', 'album'])
+        .populate('album', ['_id', 'albumname', 'background', 'description']).limit(limit);
     tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
     })
