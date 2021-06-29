@@ -32,6 +32,10 @@ const singerSchema = mongoose.Schema({
     totalLike: {
         type: Number,
         default: 0
+    },
+    liked: {
+        type: Boolean,
+        default: false
     }
 })
 
