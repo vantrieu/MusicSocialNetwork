@@ -14,6 +14,7 @@ router.post('/refresh-token', validateAuthRefresh, authRefreshToken, accountCont
 router.post('/forgot-password', accountController.fortgotpassword);
 router.post('/reset/:token', authResetPass, accountController.resetpassword);
 router.post('/change-password', validateAuth, authUser, accountController.changepassword);
+router.put('/change-password', validateAuth, authUser, accountController.changepassword2);
 router.post('/register-account', validateRegister, accountController.registeraccount);
 router.post('/register-moderator', validateAuth, authAdmin, validateRegister, accountController.registermoderator);
 router.get('/list-account', validateAuth, authModer, accountController.getlistaccount);

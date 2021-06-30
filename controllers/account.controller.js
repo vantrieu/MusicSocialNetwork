@@ -162,6 +162,21 @@ exports.changepassword = function (req, res, next) {
         .catch(err => next(err));
 }
 
+exports.changepassword2 = async function (req, res, next) {
+    const account = res.locals.account;
+    const { currentPassword, newPassword } = req.body;
+    const isPasswordMatch = await bcrypt.compare(currentPassword, account.password)
+    if (!isPasswordMatch) {
+        return responsehandler(res, 400, 'Mật khẩu hiện tại không đúng!', null, null);
+    }
+    account.password = newPassword;
+    account.save()
+        .then(() => {
+            return responsehandler(res, 200, 'Successfully', null, null);
+        })
+        .catch(err => next(err));
+}
+
 exports.registeraccount = function (req, res, next) {
     const err = validationResult(req);
     if (!err.isEmpty()) {
