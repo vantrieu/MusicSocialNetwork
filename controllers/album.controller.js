@@ -74,12 +74,12 @@ exports.detailAlbum = async function (req, res) {
         .populate('singers', ['_id', 'name'])
     //.populate('tracks', ['_id', 'total', 'tracklink', 'trackname', 'description', 'background']);
     let tracks = await Track.find({},
-        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer'])
+        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'users', 'liked', 'totalLike'])
         .where('_id').in(album.tracks)
         .populate('singer', ['_id', 'name'])
         .sort('trackname 1');
     const account = res.locals.account;
-    if(account){
+    if (account) {
         album.liked = album.users.includes(account.user_id);
     }
     album.tracks = tracks;
@@ -87,13 +87,18 @@ exports.detailAlbum = async function (req, res) {
     album.users = undefined;
     album.tracks.forEach(function (item) {
         item.tracklink = '/tracks/play/' + item._id;
+        if (account) {
+            item.liked = item.users.includes(account.user_id);
+        }
+        item.totalLike = item.users.length;
+        item.users = undefined;
     });
     return responsehandler(res, 200, 'Successfully', album, null);
 }
 
 exports.topAlbum = async function (req, res) {
     let albums = await Album.find({}, ['_id', 'total', 'albumname', 'description', 'background'])
-        .sort({ total: -1, createdAt: -1}).limit(15);
+        .sort({ total: -1, createdAt: -1 }).limit(15);
     return responsehandler(res, 200, 'Successfully', albums, null);
 }
 

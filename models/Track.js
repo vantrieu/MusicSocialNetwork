@@ -53,7 +53,15 @@ const trackSchema = mongoose.Schema({
     users: [{
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User'
-    }]
+    }],
+    totalLike: {
+        type: Number,
+        default: 0
+    },
+    liked: {
+        type: Boolean,
+        default: false
+    }
 })
 
 trackSchema.pre('deleteOne', async function (next) {

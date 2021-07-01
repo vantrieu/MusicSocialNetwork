@@ -143,13 +143,19 @@ exports.playmusicPublic = async function (req, res) {
 exports.topmusic = async function (req, res) {
     let limit = parseInt(req.query.limit) || 100;
     const tracks = await Track.find({},
-        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype'])
+        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype', 'users', 'liked', 'totalLike'])
         .sort({ total: -1 })
         .limit(limit)
         .populate('singer', ['_id', 'name', 'avatar'])
         .populate('tracktype', ['_id', 'typename']);
+    const account = res.locals.account;
     tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
+        if (account) {
+            item.liked = !item.users.includes(account.user_id);
+        }
+        item.totalLike = item.users.length;
+        item.users = undefined;
     })
     return responsehandler(res, 200, 'Successfully', tracks, null)
 }

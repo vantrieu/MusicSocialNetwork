@@ -44,11 +44,23 @@ exports.update = async function (req, res) {
 exports.getByID = async function (req, res) {
     let { id } = req.params;
     let singer = await Singer.findById(id, ['_id', 'users', 'totalLike', 'liked', 'name', 'description', 'avatar', 'createdAt', 'updatedAt'])
-    .populate('albums tracks', ['_id', 'albumname', 'background', 'tracklink', 'trackname'])
+    .populate('albums tracks', ['_id', 'albumname', 'background', 'tracklink', 'trackname', 'users', 'liked', 'totalLike'])
+    const account = res.locals.account;
     singer.tracks.forEach(function (item) {
         item._doc.tracklink = '/tracks/play/' + item._doc._id;
+        if (account) {
+            item.liked = item.users.includes(account.user_id);
+        }
+        item.totalLike = item.users.length;
+        item.users = undefined;
     })
-    const account = res.locals.account;
+    singer.albums.forEach(function (item) {
+        if (account) {
+            item.liked = item.users.includes(account.user_id);
+        }
+        item.totalLike = item.users.length;
+        item.users = undefined;
+    })
     if(account){
         singer.liked = singer.users.includes(account.user_id);
     }
