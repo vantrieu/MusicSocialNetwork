@@ -10,16 +10,18 @@ exports.backupDatabase = async function (req, res) {
     ]);
 
     backupProcess.on('exit', (code, signal) => {
-        if (code)
+        if (code) {
             console.log('Backup process exited with code ', code);
-        else if (signal)
+            return responsehandler(res, 500, 'Internal Server Error', null, null);
+        }
+        else if (signal) {
             console.error('Backup process was killed with singal ', signal);
+            return responsehandler(res, 500, 'Internal Server Error', null, null);
+        }
         else {
             console.log('Successfully backedup the database');
             driveApi.saveBakToDrive();
             return responsehandler(res, 200, 'Successfully', null, null);
         }
     });
-
-    return responsehandler(res, 500, 'Internal Server Error', null, null);
 }
