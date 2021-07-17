@@ -54,6 +54,7 @@ const { generatedb } = require('./constants/generatedb');
 const tracktypeRoute = require('./routes/tracktype');
 const singerRoute = require('./routes/singer');
 const findRoute = require('./routes/find');
+const backupRoute = require('./routes/backup');
 
 //Routes
 app.use('/albums', albumRoute);
@@ -66,6 +67,7 @@ app.use('/histories', historyRoute);
 app.use('/tracktypes', tracktypeRoute);
 app.use('/singers', singerRoute);
 app.use('/finds', findRoute);
+app.use('/backup', backupRoute);
 
 //Connect mongodb
 mongoose.connect(
@@ -85,7 +87,7 @@ mongoose.connection.once('open', function () {
 });
 
 //Auto backup database
-cron.schedule('0 0 0 * * *', () => {
+cron.schedule('0 0 0 1 * *', () => {
     let backupProcess = spawn('mongodump', [
         '--db=musicsocialnetwork',
         '--archive=./backup/musicsocialnetwork.gz',
