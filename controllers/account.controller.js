@@ -121,7 +121,7 @@ exports.fortgotpassword = async function (req, res, next) {
                         subject: 'Khôi phục mật khẩu',
                         text: 'Bạn nhận được thông báo này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.\n' +
                             'Vui lòng nhấp vào liên kết dưới đây hoặc sao chép liên kết và dán vào trình duyệt của bạn để hoàn tất quá trình:\n\n' +
-                            'http://localhost:3200/reset-password/' + account.resetPasswordToken + '\n\n' +
+                            'https://kltn-admin.vercel.app/reset-password/' + account.resetPasswordToken + '\n\n' +
                             'Lưu ý: Liên kế chỉ có hiệu lực trong 5 phút kể từ khi nhận được thư này! \n' +
                             'Nếu bạn không yêu cầu điều này, vui lòng bỏ qua thư này và mật khẩu của bạn sẽ không thay đổi!\n'
                     }
