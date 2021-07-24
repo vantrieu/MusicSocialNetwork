@@ -315,18 +315,24 @@ exports.topTrend = async function (req, res) {
 async function CalcaltorTrending(res, data) {
     var topTrend = data.items;
 
-    let keywords =  [];
+    let keywords = [];
+
+    let tracks = [];
 
     topTrend.forEach(track => {
         let name = removeVietnameseTones(track.name);
         keywords.push(name);
     })
 
-    let tracks = await Track.find({},
-        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype', 'users', 'liked', 'totalLike'])
-        .where('namenosign').in(keywords)
-        .populate('singer', ['_id', 'name', 'avatar'])
-        .populate('tracktype', ['_id', 'typename']);
+    for(let i = 0; i < keywords.length; i++){
+        let track = await Track.findOne({namenosign: keywords[i]},
+            ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype', 'users', 'liked', 'totalLike'])
+            .populate('singer', ['_id', 'name', 'avatar'])
+            .populate('tracktype', ['_id', 'typename']);
+        if(track != null){
+            tracks.push(track);
+        }
+    }
     
     const account = res.locals.account;
 
