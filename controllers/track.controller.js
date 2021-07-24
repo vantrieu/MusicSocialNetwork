@@ -14,6 +14,7 @@ const removeFile = require('../services/remove-files');
 const TrackType = require('../models/TrackType');
 const Playlist = require('../models/Playlist');
 const Album = require('../models/Album');
+const fetch = require('node-fetch');
 
 exports.createTrack = async function (req, res) {
     const track = new Track(req.body);
@@ -303,4 +304,40 @@ exports.downloadFile = async function (req, res) {
     const track = await Track.findOne({ trackname: trackname }, ['_id', 'tracklink', 'trackname']);
     const directoryPath = path.resolve(__dirname.replace('controllers', ''), track.tracklink);
     return res.download(directoryPath);
+}
+
+exports.topTrend = async function (req, res) {
+    return fetch('https://mp3.zing.vn/xhr/media/get-list?op=top100&start=0&length=20&id=ZWZB969E')
+        .then(response => response.json())
+        .then(data => CalcaltorTrending(res, data.data));
+}
+
+async function CalcaltorTrending(res, data) {
+    var topTrend = data.items;
+
+    let keywords =  [];
+
+    topTrend.forEach(track => {
+        let name = removeVietnameseTones(track.name);
+        keywords.push(name);
+    })
+
+    let tracks = await Track.find({},
+        ['_id', 'total', 'tracklink', 'trackname', 'description', 'background', 'singer', 'tracktype', 'users', 'liked', 'totalLike'])
+        .where('namenosign').in(keywords)
+        .populate('singer', ['_id', 'name', 'avatar'])
+        .populate('tracktype', ['_id', 'typename']);
+    
+    const account = res.locals.account;
+
+    tracks.forEach(function (item) {
+        item._doc.tracklink = '/tracks/play/' + item._doc._id;
+        if (account) {
+            item.liked = !item.users.includes(account.user_id);
+        }
+        item.totalLike = item.users.length;
+        item.users = undefined;
+    })
+
+    return responsehandler(res, 200, 'Successfully', tracks, null);
 }

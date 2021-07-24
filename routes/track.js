@@ -15,5 +15,6 @@ router.get('/option-music/:trackID', TrackController.optionMusic);
 router.get('/option/:trackID', TrackController.optionAlbum);
 router.get('/find', TrackController.findbyname);
 router.get('/download/:trackname', TrackController.downloadFile);
+router.get('/top-trending', getCurrentUser, TrackController.topTrend);
 
 module.exports = router;
