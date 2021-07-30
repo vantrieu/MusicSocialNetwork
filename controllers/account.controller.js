@@ -72,7 +72,7 @@ exports.login = async function (req, res) {
         'accessToken': accessToken,
         'refreshToken': refreshToken
     };
-    return res.status(200).json(data);
+    return responsehandler(res, 200, 'Successfully', data, null);
 }
 
 exports.refreshtoken = async function (req, res) {
