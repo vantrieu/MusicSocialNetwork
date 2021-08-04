@@ -107,6 +107,23 @@ cron.schedule('0 0 0 1 * *', () => {
     });
 });
 
+let backupProcess = spawn('mongorestore', [
+    '--db=musicsocialnetwork',
+    '--archive=./backup/musicsocialnetwork.gz',
+    '--gzip'
+  ]);
+
+backupProcess.on('exit', (code, signal) => {
+    if(code) 
+        console.log('Restore process exited with code ', code);
+    else if (signal)
+        console.error('Restore process was killed with singal ', signal);
+    else {
+        console.log('Successfully restore the database!');
+    }
+        
+});
+
 // cron.schedule('0 0 * * * *', () => {
 //     cronjob.CalculatorAlbum();
 // });
