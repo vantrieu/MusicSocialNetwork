@@ -61,8 +61,8 @@ typings/
 .env
 
 # file store local
-musics/
-public/images/
+# musics/
+# public/images/
 
 
 # End of https://www.gitignore.io/api/node
